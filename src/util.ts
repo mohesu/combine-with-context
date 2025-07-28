@@ -16,10 +16,12 @@ export function timestampString(): string {
   return new Date().toISOString().replace(/[^\dT]/g, '_').slice(0, 19);
 }
 
+// MODIFIED: Exclude \n (U+000A) and \r (U+000D) from being stripped
 export function stripControlChars(text: string): string {
-  return text.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+  // Regex to remove control characters, but explicitly keep \n (U+000A) and \r (U+000D)
+  // \u0000-\u0009, \u000B-\u000C, \u000E-\u001F, \u007F-\u009F
+  return text.replace(/[\u0000-\u0009\u000B-\u000C\u000E-\u001F\u007F-\u009F]/g, '');
 }
-
 
 export function getBestFence(content: string): string {
   let max = 3;

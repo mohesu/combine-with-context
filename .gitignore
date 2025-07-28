@@ -1,6 +1,12 @@
-out
-dist
-node_modules
-.vscode-test/
+paste.txt
+.llm-context-history/
+.llm-context/
+out/
+node_modules/
+.vscode/
 *.vsix
 .DS_Store
+npm-debug.log
+*.log
+*.tsbuildinfo
+dist/

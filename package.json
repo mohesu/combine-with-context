@@ -1,0 +1,103 @@
+{
+  "name": "copy-with-context",
+  "displayName": "Copy to LLM Context",
+  "publisher": "copy-context",
+  "description": "Copy files onto clipboard in Markdown format along with relative paths. Format is LLM friendly.",
+  "version": "1.5.3",
+  "icon" : "public/copy-context-icon.png",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "contextCopy.copySelectionWithContextCommand",
+        "title": "Copy Context: LLM friendly format"
+      },
+      {
+        "command": "contextCopy.copySelectedCodeWithContextCommand",
+        "title": "Copy Context: LLM friendly format"
+      },
+      {
+        "command": "contextCopy.editExcludedPaths",
+        "title": "Copy Context: Edit Excluded Paths"
+      }
+    ],
+    "configuration": {
+      "title": "Copy With Context",
+      "properties": {
+        "copyWithContext.excludedPaths": {
+          "type": "array",
+          "default": [".git", "node_modules", "out", "dist", ".env", ".vercel", ".next", ".vscode-test"],
+          "description": "Files and folders to exclude when copying context"
+        }
+      }
+    },
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "contextCopy.copySelectionWithContextCommand",
+          "when": "explorerViewletVisible",
+          "group": "6_cutcopypaste@3"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "contextCopy.copySelectedCodeWithContextCommand",
+          "when": "editorHasSelection",
+          "group": "copy@3"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "contextCopy.copySelectionWithContextCommand",
+          "when": "false"
+        },
+        {
+          "command": "contextCopy.copySelectedCodeWithContextCommand",
+          "when": "false"
+        },
+        {
+          "command": "contextCopy.editExcludedPaths",
+          "when": "editorFocus || explorerViewletVisible"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "pnpm run package",
+    "compile": "pnpm run check-types && pnpm run lint && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "pnpm run check-types && pnpm run lint && node esbuild.js --production",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "~20.17.28",
+    "@types/vscode": "^1.75.0",
+    "@typescript-eslint/eslint-plugin": "^8.28.0",
+    "@typescript-eslint/parser": "^8.28.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "esbuild": "^0.25.1",
+    "eslint": "^9.23.0",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.8.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Daniel-Ronson/copy-with-context.git"
+  }
+}

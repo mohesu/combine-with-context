@@ -20,6 +20,8 @@ export function getMarkdownLangForFile(filename: string): string {
     case "py": return "python";
     case "java": return "java";
     case "css": return "css";
+    case "yml": 
+    case "yaml": return "yaml";
     default: return '';
   }
 }

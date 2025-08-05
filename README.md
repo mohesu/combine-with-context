@@ -66,4 +66,3 @@ Set these in your workspace or global settings:
 ---
 
 MIT License  
-Inspired by [Daniel Ronson's original repo](https://github.com/Daniel-Ronson/copy-with-context)

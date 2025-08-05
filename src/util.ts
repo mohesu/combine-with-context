@@ -160,7 +160,7 @@ function removeCommentsPython(code: string): string {
       continue;
     }
     if (c === '#') {
-      while (i < code.length && code[i] !== '\n') i++;
+      while (i < code.length && code[i] !== '\n') {i++;}
       continue;
     }
     if (c === '"' || c === "'") {
@@ -185,7 +185,7 @@ function removeCommentsCSS(code: string): string {
   return code.replace(/\/\*[\s\S]*?\*\//g, '');
 }
 
-const indentDependentLangs = new Set(['python']);
+const indentDependentLangs = new Set(['python', 'yaml']);
 
 export function minifyContent(content: string, lang: string): string {
   let cleaned = content;

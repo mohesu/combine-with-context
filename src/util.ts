@@ -9,9 +9,8 @@ export function isBinaryFile(buffer: Buffer): boolean {
 }
 
 export function ensureDirExists(dirPath: string) {
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
-  }
+  if (!fs.existsSync(dirPath))
+    {fs.mkdirSync(dirPath, { recursive: true });}
 }
 
 export function timestampString(): string {
@@ -19,7 +18,7 @@ export function timestampString(): string {
 }
 
 export function stripControlChars(text: string): string {
-  return text.replace(/[\u0000-\u0009\u000B-\u000C\u000E-\u001F\u007F-\u009F]/g, '');
+  return text.replace(/[-\u0009\u000B-\u000C\u000E-\u001F\u007F-\u009F]/g, '');
 }
 
 export function getBestFence(content: string): string {
@@ -161,7 +160,7 @@ function removeCommentsPython(code: string): string {
       continue;
     }
     if (c === '#') {
-      while (i < code.length && code[i] !== '\n') {i++;}
+      while (i < code.length && code[i] !== '\n') i++;
       continue;
     }
     if (c === '"' || c === "'") {
@@ -186,9 +185,12 @@ function removeCommentsCSS(code: string): string {
   return code.replace(/\/\*[\s\S]*?\*\//g, '');
 }
 
+const indentDependentLangs = new Set(['python']);
+
 export function minifyContent(content: string, lang: string): string {
   let cleaned = content;
-  switch (lang.toLowerCase()) {
+  const lowerLang = lang.toLowerCase();
+  switch (lowerLang) {
     case 'javascript':
     case 'typescript':
       cleaned = removeCommentsJS(content);
@@ -200,8 +202,12 @@ export function minifyContent(content: string, lang: string): string {
       cleaned = removeCommentsCSS(content);
       break;
   }
-  return cleaned.split('\n')
-    .map(line => line.trim().replace(/\s+/g, ' '))
-    .filter(line => line.length > 0)
-    .join('\n');
+  let lines = cleaned.split('\n');
+  if (indentDependentLangs.has(lowerLang)) {
+    lines = lines.map(line => line.replace(/\s+$/, '')); // rstrip trailing whitespace
+  } else {
+    lines = lines.map(line => line.trim().replace(/\s+/g, ' '));
+  }
+  lines = lines.filter(line => line.length > 0);
+  return lines.join('\n');
 }

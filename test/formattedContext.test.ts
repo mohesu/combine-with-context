@@ -3,7 +3,7 @@ function getBestFence(content: string): string {
   let match;
   const regex = /(`{3,})/g;
   while ((match = regex.exec(content)) !== null) {
-    if (match[1].length >= max) max = match[1].length + 1;
+    if (match[1].length >= max) {max = match[1].length + 1;}
   }
   return '`'.repeat(max);
 }

@@ -32,7 +32,7 @@ describe('getFormattedContext', () => {
   });
 
   it('triple backtick for code with none', () => {
-    const files = [{ rel: 'plain.txt', content: 'abc' }];
+    const files = [{ rel: 'plain.md', content: 'abc' }];
     const md = mockGetFormattedContext(files);
     expect(md).toContain('```\nabc\n```');
   });

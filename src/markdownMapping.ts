@@ -19,6 +19,7 @@ export function getMarkdownLangForFile(filename: string): string {
     case "sh": return "bash";
     case "py": return "python";
     case "java": return "java";
+    case "css": return "css";
     default: return '';
   }
 }

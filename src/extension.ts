@@ -2,7 +2,8 @@ import ignore from 'ignore';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { isBinaryFile, ensureDirExists, timestampString, stripControlChars, getBestFence } from './util';
+import * as fsp from 'fs/promises';
+import { isBinaryFile, ensureDirExists, timestampString, stripControlChars, getBestFence, buildFileTree, minifyContent } from './util';
 import { getGitIgnore } from './gitIgnoreFilter';
 import { getConfig } from './settings';
 import { getMarkdownLangForFile } from './markdownMapping';
@@ -24,58 +25,99 @@ async function collectFiles(
   config: ReturnType<typeof getConfig>,
   gitIgnoreFilter: ReturnType<typeof ignore> | null,
   progress?: vscode.Progress<{ message?: string }>
-): Promise<vscode.Uri[]> {
+): Promise<{files: vscode.Uri[], relPaths: string[], extCounts: Map<string, number>}> {
   const toProcess: vscode.Uri[] = [...uris];
-  const collected: vscode.Uri[] = [];
+  const files: vscode.Uri[] = [];
+  const relPaths: string[] = [];
+  const extCounts = new Map<string, number>();
   const processed = new Set<string>();
+  const resolvedProcessed = new Set<string>();
   let filesCount = 0, bytesTotal = 0;
   while (toProcess.length > 0) {
     const uri = toProcess.pop()!;
     if (processed.has(uri.fsPath)) {continue;}
     processed.add(uri.fsPath);
     try {
-      const fileStat = await vscode.workspace.fs.stat(uri);
-      const relPath = path.relative(workspaceRoot, uri.fsPath);
+      let fileStat = await vscode.workspace.fs.stat(uri);
+      let currentUri = uri;
+      let relPath = path.relative(workspaceRoot, uri.fsPath).replace(/\\/g, '/');
+      if (fileStat.type === vscode.FileType.SymbolicLink) {
+        if (config.symlinkHandling === 'skip') {continue;}
+        if (config.symlinkHandling === 'resolve') {
+          const realPath = await fsp.realpath(uri.fsPath);
+          if (resolvedProcessed.has(realPath)) {continue;}
+          resolvedProcessed.add(realPath);
+          currentUri = vscode.Uri.file(realPath);
+          fileStat = await vscode.workspace.fs.stat(currentUri);
+          relPath = path.relative(workspaceRoot, currentUri.fsPath).replace(/\\/g, '/');
+        }
+      }
       if (gitIgnoreFilter && relPath && gitIgnoreFilter.ignores(relPath)) {continue;}
       if (fileStat.type === vscode.FileType.File) {
-        if (config.filteredExtensions.some(ext => uri.fsPath.endsWith(ext))) {continue;}
+        if (config.filteredExtensions.some(ext => currentUri.fsPath.endsWith(ext))) {continue;}
         if (fileStat.size > config.maxFileSize) {continue;}
         let buf: Buffer;
-        try { buf = Buffer.from(await vscode.workspace.fs.readFile(uri)); }
+        try { buf = Buffer.from(await vscode.workspace.fs.readFile(currentUri)); }
         catch (err) { log(err); continue; }
         if (isBinaryFile(buf)) {continue;}
-        collected.push(uri); filesCount++; bytesTotal += fileStat.size;
+        const trimmedContent = buf.toString('utf8').trim();
+        if (trimmedContent === '') {continue;}
+        files.push(currentUri);
+        relPaths.push(relPath);
+        const ext = path.extname(relPath).toLowerCase();
+        extCounts.set(ext, (extCounts.get(ext) || 0) + 1);
+        filesCount++; bytesTotal += fileStat.size;
         if (progress && filesCount % 50 === 0) {progress.report({ message: `Indexed ${filesCount} files, ${(bytesTotal / 1048576).toFixed(2)}MB...` });}
         if (filesCount > WARN_FILE_COUNT || bytesTotal > WARN_BYTES_TOTAL) {break;}
       } else if (fileStat.type === vscode.FileType.Directory) {
-        if (/node_modules|\.git|dist|out/i.test(uri.fsPath)) {continue;}
-        for (const [name] of await vscode.workspace.fs.readDirectory(uri)) {
-          toProcess.push(vscode.Uri.joinPath(uri, name));
+        for (const [name] of await vscode.workspace.fs.readDirectory(currentUri)) {
+          toProcess.push(vscode.Uri.joinPath(currentUri, name));
         }
       }
     } catch (err) { log(err); continue; }
   }
-  return collected;
+  relPaths.sort((a, b) => a.localeCompare(b));
+  return {files, relPaths, extCounts};
 }
 
 async function getFormattedContext(
   files: vscode.Uri[],
   workspaceRoot: string,
-  config: ReturnType<typeof getConfig>
+  config: ReturnType<typeof getConfig>,
+  relPaths: string[],
+  extCounts: Map<string, number>
 ): Promise<string> {
   let output = '';
   const now = new Date();
+  if (config.includeFileTree) {
+    const tree = buildFileTree(relPaths);
+    output += `## File Tree @ ${now.toLocaleString()}\n\`\`\`\n${tree}\n\`\`\`\n\n`;
+  }
+  if (config.includeFileAnalysis) {
+    output += `## File Analysis @ ${now.toLocaleString()}\n`;
+    output += `- Total files: ${files.length}\n`;
+    const sortedExts = Array.from(extCounts.entries()).sort(([a], [b]) => a.localeCompare(b));
+    for (const [ext, count] of sortedExts) {
+      const extDisplay = ext ? ext : 'no extension';
+      output += `- ${extDisplay}: ${count}\n`;
+    }
+    output += '\n';
+    output += config.separator;
+  }
   for (const fileUri of files) {
     let relPath = path.relative(workspaceRoot, fileUri.fsPath).replace(/\\/g, '/');
     let content = '';
+    const lang = getMarkdownLangForFile(relPath) || '';
     try {
       content = Buffer.from(await vscode.workspace.fs.readFile(fileUri)).toString('utf8');
       content = stripControlChars(content);
       content = content.replace(/\r\n/g, '\n');
+      if (config.compressContent) {
+        content = minifyContent(content, lang);
+      }
     } catch {
       continue;
     }
-    const lang = getMarkdownLangForFile(relPath) || '';
     const fence = getBestFence(content);
     output += `#### ${relPath}`;
     if (config.includeTimestamp) {output += ` @ ${now.toLocaleString()}`;}
@@ -122,45 +164,45 @@ async function handleSaveToPasteFile(uri: vscode.Uri, uris?: vscode.Uri[]) {
     await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: 'Copying context to paste.txt...',
+        title: 'Copying context to paste.md...',
         cancellable: false,
       },
       async (progress) => {
-        let files: vscode.Uri[] = [];
+        let collected: {files: vscode.Uri[], relPaths: string[], extCounts: Map<string, number>};
         try {
-          files = await collectFiles(selection, workspaceRoot, config, gitIgnoreFilter, progress);
+          collected = await collectFiles(selection, workspaceRoot, config, gitIgnoreFilter, progress);
         } catch (err) {
           vscode.window.showErrorMessage(`Copy with Context: Failed to collect files.`);
           log(err);
           return;
         }
         let totalBytes = 0;
-        for (const fileUri of files) {
+        for (const fileUri of collected.files) {
           const stat = await vscode.workspace.fs.stat(fileUri);
           totalBytes += stat.size;
         }
-        if (files.length > WARN_FILE_COUNT || totalBytes > WARN_BYTES_TOTAL) {
+        if (collected.files.length > WARN_FILE_COUNT || totalBytes > WARN_BYTES_TOTAL) {
           const proceed = await vscode.window.showQuickPick(['Proceed', 'Cancel'], {
-            placeHolder: `You are about to aggregate ${files.length} files / ${(totalBytes / 1048576).toFixed(2)}MB. Proceed?`,
+            placeHolder: `You are about to aggregate ${collected.files.length} files / ${(totalBytes / 1048576).toFixed(2)}MB. Proceed?`,
           });
           if (proceed !== 'Proceed') {return;}
         }
-        if (files.length === 0) {
+        if (collected.files.length === 0) {
           vscode.window.showWarningMessage('No eligible files found for context copy. Check your .gitignore and exclusion settings.');
           return;
         }
-        const output = await getFormattedContext(files, workspaceRoot, config);
+        const output = await getFormattedContext(collected.files, workspaceRoot, config, collected.relPaths, collected.extCounts);
 
         if (fs.existsSync(outputFile)) {
           try {
             const historyDir = path.join(workspaceRoot, config.historyFolder || '.llm-context-history');
             ensureDirExists(historyDir);
             const ts = timestampString();
-            const backupFile = path.join(historyDir, `paste.${ts}.txt`);
+            const backupFile = path.join(historyDir, `paste.${ts}.md`);
             fs.copyFileSync(outputFile, backupFile);
             log(`Backup created: ${backupFile}`);
           } catch (backupErr) {
-            vscode.window.showWarningMessage(`Copy with Context: Failed to backup existing paste.txt.`);
+            vscode.window.showWarningMessage(`Copy with Context: Failed to backup existing paste.md.`);
             log(backupErr);
           }
         }
@@ -213,7 +255,7 @@ async function handleUndoLastSave() {
     }
     const backups = fs
       .readdirSync(historyDir)
-      .filter((f) => f.startsWith('paste.') && f.endsWith('.txt'))
+      .filter((f) => f.startsWith('paste.') && f.endsWith('.md'))
       .sort()
       .reverse();
     if (backups.length === 0) {
@@ -224,13 +266,13 @@ async function handleUndoLastSave() {
     try {
       fs.copyFileSync(lastBackup, outputFile);
       log(`Undo: Restored ${outputFile} from ${lastBackup}`);
-      vscode.window.showInformationMessage('paste.txt has been restored from most recent backup.');
+      vscode.window.showInformationMessage('paste.md has been restored from most recent backup.');
       if (config.openAfterSave) {
         const doc = await vscode.workspace.openTextDocument(outputFile);
         vscode.window.showTextDocument(doc, { preview: false });
       }
     } catch (cpErr) {
-      vscode.window.showErrorMessage('Failed to restore paste.txt from backup.');
+      vscode.window.showErrorMessage('Failed to restore paste.md from backup.');
       log(cpErr);
     }
   } catch (err) {
@@ -262,20 +304,20 @@ async function handleCopyToClipboard(uri: vscode.Uri, uris?: vscode.Uri[]) {
         cancellable: false,
       },
       async (progress) => {
-        let files: vscode.Uri[] = [];
+        let collected: {files: vscode.Uri[], relPaths: string[], extCounts: Map<string, number>};
         try {
-          files = await collectFiles(selection, workspaceRoot, config, gitIgnoreFilter, progress);
+          collected = await collectFiles(selection, workspaceRoot, config, gitIgnoreFilter, progress);
         } catch (err) {
           vscode.window.showErrorMessage('Copy with Context: Failed to collect files.');
           log(err);
           return;
         }
-        if (files.length === 0) {
+        if (collected.files.length === 0) {
           vscode.window.showWarningMessage('No eligible files found for context copy. Check your .gitignore and exclusion settings.');
           return;
         }
 
-        const output = await getFormattedContext(files, workspaceRoot, config);
+        const output = await getFormattedContext(collected.files, workspaceRoot, config, collected.relPaths, collected.extCounts);
         try {
           await vscode.env.clipboard.writeText(output);
           vscode.window.showInformationMessage('Context copied to clipboard!');

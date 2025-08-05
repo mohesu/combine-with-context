@@ -1,14 +1,16 @@
 # Copy with Context VS Code Extension
 
-**A robust, feature-rich way to export code context to a markdown file (`paste.txt`) for AI/LLM workflows, with advanced filtering, .gitignore support, history/undo and full customization.**
+**A robust, feature-rich way to export code context to a markdown file (`paste.md`) for AI/LLM workflows, with advanced filtering, .gitignore support, history/undo, file tree/analysis, content compression, symlink handling, and full customization.**
 
 ## Features
 
 - **Multi-select**: Select any files and/or folders in VS Code Explorer.
-- **LLM-friendly Markdown**: Each file block is clearly marked (with path, code block, timestamp).
-- **Smart filtering**: Excludes binary files, images, large files, and recognizes `.gitignore`.
+- **LLM-friendly Markdown**: Each file block is clearly marked (with path, code block, timestamp); optional file tree and type-wise analysis.
+- **Smart filtering**: Excludes binary files, images, large/empty files, and recognizes `.gitignore`.
+- **Content compression**: Minifies code (trim whitespace, remove comments for JS/TS, Python, CSS) when enabled.
+- **Symlink handling**: Configurable to skip or resolve symlinks.
 - **User configuration**: Change output file, folder, append/overwrite, excludes, separators, etc., via settings.
-- **One-click undo**: Restore a previous paste.txt from history.
+- **One-click undo**: Restore a previous paste.md from history.
 - **Clipboard mode**: Optionally copy context directly to clipboard.
 - **Progress & warnings**: Notifies if selection is very large (lots of files or total MBs).
 - **Output channel logging**: For debugging and traceability.
@@ -17,9 +19,9 @@
 ## Usage
 
 1. **Select files/folders** in the VS Code Explorer.
-2. **Right-click**, choose **Copy with Context: Save to paste.txt**.
-3. Output will appear in `paste.txt` (or your chosen name/folder).
-4. **Undo**: Use the `Undo last paste.txt Save` command to restore a recent backup.
+2. **Right-click**, choose **Copy with Context: Save to paste.md**.
+3. Output will appear in `paste.md` (or your chosen name/folder).
+4. **Undo**: Use the `Undo last paste.md Save` command to restore a recent backup.
 5. **Clipboard**: Use the `Copy with Context: Copy to Clipboard` command/menu.
 
 ## Configuration (settings)
@@ -28,7 +30,7 @@ Set these in your workspace or global settings:
 
 | Setting                         | Default                 | Description                                 |
 |----------------------------------|-------------------------|---------------------------------------------|
-| outputFileName                   | "paste.txt"             | Name/path for output file                   |
+| outputFileName                   | "paste.md"              | Name/path for output file                   |
 | appendMode                       | false                   | Append or overwrite                         |
 | includeTimestamp                 | true                    | Add timestamp to each file block            |
 | filteredExtensions               | `.png`, `.exe` etc.     | Array of extensions to skip                 |
@@ -38,16 +40,20 @@ Set these in your workspace or global settings:
 | separator                        | "\n---\n"               | Markdown separator between file blocks      |
 | useGitignore                     | true                    | Use `.gitignore` for filtering              |
 | historyFolder                    | `.llm-context-history`  | History folder for backups                  |
+| includeFileTree                  | true                    | Include file tree in output                 |
+| includeFileAnalysis              | true                    | Include file count/type analysis            |
+| symlinkHandling                  | "skip"                  | Handle symlinks: "skip" or "resolve"        |
+| compressContent                  | false                   | Minify content and remove comments          |
 
 ## Keybindings
 
-- Save to paste.txt: `Ctrl+Alt+Shift+S`
+- Save to paste.md: `Ctrl+Alt+Shift+S`
 - Copy to clipboard: `Ctrl+Alt+Shift+C`
 - Undo last save: `Ctrl+Alt+Shift+U`
 
 ## Troubleshooting
 
-- If no files appear: Check filteredExtensions, .gitignore, and file size limits.
+- If no files appear: Check filteredExtensions, .gitignore, file size limits, or empty files.
 - If output isn't updated: Confirm permissions and path.
 - For debugging: Run the "Copy with Context: Show Log" command to see output logs.
 

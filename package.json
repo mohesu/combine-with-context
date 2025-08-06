@@ -21,7 +21,7 @@
     "commands": [
       {
         "command": "copyWithContext.saveToPasteFile",
-        "title": "Combine with Context: Save to paste.txt",
+        "title": "Combine with Context: Save to paste file",
         "category": "Combine with Context"
       },
       {
@@ -31,7 +31,7 @@
       },
       {
         "command": "copyWithContext.undoLastSave",
-        "title": "Combine with Context: Undo last paste.txt Save",
+        "title": "Combine with Context: Undo last paste file Save",
         "category": "Combine with Context"
       }
     ],
@@ -151,6 +151,17 @@
             }
           },
           "description": "Map file extension to markdown code block language."
+        },
+        "copyWithContext.symlinkHandling": {
+          "type": "string",
+          "enum": ["skip", "resolve"],
+          "default": "ignore",
+          "description": "How to handle symlinks: ''skip'' to ignore, ''resolve'' to follow symlinks."
+        },
+        "copyWithContext.compressContent": {
+          "type": "boolean",
+          "default": false,
+          "description": "Remove white spaces and comments before saving."
         }
       }
     }

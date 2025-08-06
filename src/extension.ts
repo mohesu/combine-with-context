@@ -164,7 +164,7 @@ async function handleSaveToPasteFile(uri: vscode.Uri, uris?: vscode.Uri[]) {
     await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: 'Copying context to paste.md...',
+        title: 'Copying context to paste file...',
         cancellable: false,
       },
       async (progress) => {
@@ -202,7 +202,7 @@ async function handleSaveToPasteFile(uri: vscode.Uri, uris?: vscode.Uri[]) {
             fs.copyFileSync(outputFile, backupFile);
             log(`Backup created: ${backupFile}`);
           } catch (backupErr) {
-            vscode.window.showWarningMessage(`Copy with Context: Failed to backup existing paste.md.`);
+            vscode.window.showWarningMessage(`Copy with Context: Failed to backup existing paste file.`);
             log(backupErr);
           }
         }
@@ -266,13 +266,13 @@ async function handleUndoLastSave() {
     try {
       fs.copyFileSync(lastBackup, outputFile);
       log(`Undo: Restored ${outputFile} from ${lastBackup}`);
-      vscode.window.showInformationMessage('paste.md has been restored from most recent backup.');
+      vscode.window.showInformationMessage('paste file has been restored from most recent backup.');
       if (config.openAfterSave) {
         const doc = await vscode.workspace.openTextDocument(outputFile);
         vscode.window.showTextDocument(doc, { preview: false });
       }
     } catch (cpErr) {
-      vscode.window.showErrorMessage('Failed to restore paste.md from backup.');
+      vscode.window.showErrorMessage('Failed to restore paste file from backup.');
       log(cpErr);
     }
   } catch (err) {

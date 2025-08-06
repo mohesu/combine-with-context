@@ -2,7 +2,7 @@
   "name": "combine-with-context",
   "displayName": "Combine with Context",
   "description": "Export project code context in clean Markdown for LLMs. Maps languages, filters files, supports .gitignore and history.",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "publisher": "mohesu",
   "icon": "icon.png",
   "engines": {

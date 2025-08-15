@@ -2,8 +2,9 @@ name: Publish Extension
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
 
 jobs:
   publish:
@@ -15,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '20'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
@@ -33,6 +34,12 @@ jobs:
         run: |
           pnpm exec vsce package --no-dependencies
           echo "vsix-path=$(ls *.vsix)" >> $GITHUB_OUTPUT
+
+      - name: Create namespace (if needed)
+        run: |
+          npm install -g ovsx
+          npx ovsx create-namespace mohesu -p ${{ secrets.OPEN_VSX_TOKEN }} || echo "Namespace might already exist"
+        continue-on-error: true
 
       - name: Publish to Open VSX Registry
         uses: HaaLeo/publish-vscode-extension@v1

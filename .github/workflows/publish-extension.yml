@@ -46,6 +46,7 @@ jobs:
           pat: ${{ secrets.OPEN_VSX_TOKEN }}
           extensionFile: ${{ steps.package.outputs.vsix-path }}
           registryUrl: https://open-vsx.org
+          skipDuplicate: true
 
       - name: Publish to Visual Studio Marketplace (Optional)
         uses: HaaLeo/publish-vscode-extension@v1
@@ -53,3 +54,4 @@ jobs:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com
           extensionFile: ${{ steps.package.outputs.vsix-path }}
+          skipDuplicate: true

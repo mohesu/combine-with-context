@@ -1,0 +1,83 @@
+<idea-plugin>
+    <id>com.mohesu.combine-with-context</id>
+    <name>Combine with Context</name>
+    <vendor email="contact@mohesu.com" url="https://github.com/mohesu/combine-with-context">mohesu</vendor>
+
+    <description><![CDATA[
+      Export project code context in clean Markdown for LLMs. Maps languages, filters files, supports .gitignore and history.
+      
+      Features:
+      - Multi-select files and folders in Project View
+      - Export as Markdown or ZIP archive
+      - Copy to clipboard
+      - Smart filtering (binary files, .gitignore, file size limits)
+      - LLM-friendly formatting with syntax highlighting
+      - File tree and analysis generation
+      - Content compression and minification
+      - Symlink handling
+      - History and undo functionality
+      ]]></description>
+
+    <change-notes><![CDATA[
+      <b>2.4.2</b>
+      <ul>
+        <li>Initial JetBrains IDE support</li>
+        <li>Port from VS Code extension</li>
+        <li>Support for IntelliJ IDEA, WebStorm, PyCharm, Android Studio, etc.</li>
+      </ul>
+      ]]></change-notes>
+
+    <!-- Product and plugin compatibility requirements -->
+    <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Add your extensions here -->
+        <applicationConfigurable
+                parentId="tools"
+                instance="com.mohesu.combinecontext.settings.CombineContextConfigurable"
+                id="com.mohesu.combinecontext.settings.CombineContextConfigurable"
+                displayName="Combine with Context"/>
+    </extensions>
+
+    <actions>
+        <group id="CombineWithContext" text="Combine with Context" popup="true">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="$Copy"/>
+            
+            <action id="CombineContext.CopyToClipboard"
+                    class="com.mohesu.combinecontext.actions.CopyToClipboardAction"
+                    text="CC: Copy to Clipboard"
+                    description="Copy selected files/folders to clipboard as formatted markdown">
+                <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift C"/>
+            </action>
+            
+            <action id="CombineContext.SaveToPasteFile"
+                    class="com.mohesu.combinecontext.actions.SaveToPasteFileAction"
+                    text="CC: Save to Paste File"
+                    description="Save selected files/folders as markdown file">
+                <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift P"/>
+            </action>
+            
+            <action id="CombineContext.SaveAsZip"
+                    class="com.mohesu.combinecontext.actions.SaveAsZipAction"
+                    text="CC: Save as ZIP"
+                    description="Save selected files/folders as ZIP archive">
+                <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift O"/>
+            </action>
+            
+            <action id="CombineContext.UpdateLast"
+                    class="com.mohesu.combinecontext.actions.UpdateLastAction"
+                    text="CC: Update Last Output"
+                    description="Update the last generated output">
+                <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift U"/>
+            </action>
+            
+            <action id="CombineContext.UndoLastSave"
+                    class="com.mohesu.combinecontext.actions.UndoLastSaveAction"
+                    text="CC: Undo Last Save"
+                    description="Undo the last save operation">
+                <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift Z"/>
+            </action>
+        </group>
+    </actions>
+</idea-plugin>

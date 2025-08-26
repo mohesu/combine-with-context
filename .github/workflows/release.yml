@@ -1,0 +1,144 @@
+name: Create Release
+
+# Trigger on version tags (e.g., v2.5.0, v1.0.0)
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  # Build VS Code extension (.vsix file)
+  build-vscode:
+    runs-on: ubuntu-latest
+    outputs:
+      vsix-path: ${{ steps.package.outputs.vsix-path }}
+      vsix-name: ${{ steps.package.outputs.vsix-name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build extension
+        run: pnpm run package
+
+      - name: Package extension
+        id: package
+        run: |
+          pnpm exec vsce package --no-dependencies
+          echo "vsix-path=$(ls *.vsix)" >> $GITHUB_OUTPUT
+          echo "vsix-name=$(basename $(ls *.vsix))" >> $GITHUB_OUTPUT
+
+      - name: Upload VS Code artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-extension
+          path: ${{ steps.package.outputs.vsix-path }}
+
+  # Build JetBrains plugin (.zip file)
+  build-intellij:
+    runs-on: ubuntu-latest
+    outputs:
+      plugin-path: ${{ steps.plugin.outputs.plugin-path }}
+      plugin-name: ${{ steps.plugin.outputs.plugin-name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+
+      - name: Make gradlew executable
+        working-directory: ./jetbrains-plugin
+        run: chmod +x gradlew
+
+      - name: Build plugin
+        working-directory: ./jetbrains-plugin
+        run: ./gradlew buildPlugin
+
+      - name: Get plugin artifact
+        id: plugin
+        working-directory: ./jetbrains-plugin
+        run: |
+          PLUGIN_PATH=$(find build/distributions -name "*.zip" -type f | head -1)
+          echo "plugin-path=${PLUGIN_PATH}" >> $GITHUB_OUTPUT
+          echo "plugin-name=$(basename ${PLUGIN_PATH})" >> $GITHUB_OUTPUT
+
+      - name: Upload IntelliJ artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: intellij-plugin
+          path: jetbrains-plugin/${{ steps.plugin.outputs.plugin-path }}
+
+  # Create GitHub release with both artifacts
+  create-release:
+    needs: [build-vscode, build-intellij]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download VS Code artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vscode-extension
+          path: ./artifacts
+
+      - name: Download IntelliJ artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: intellij-plugin
+          path: ./artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./artifacts/*
+          name: "Release ${{ github.ref_name }}"
+          body: |
+            ## Combined Release ${{ github.ref_name }}
+            
+            This release includes both the VS Code extension and JetBrains plugin.
+            
+            ### VS Code Extension
+            **File**: `${{ needs.build-vscode.outputs.vsix-name }}`
+            
+            **Installation**:
+            - Download the `.vsix` file
+            - In VS Code: Command Palette → "Extensions: Install from VSIX..."
+            - Or via command line: `code --install-extension ${{ needs.build-vscode.outputs.vsix-name }}`
+            
+            ### JetBrains Plugin
+            **File**: `${{ needs.build-intellij.outputs.plugin-name }}`
+            
+            **Installation**:
+            1. Download the `.zip` file
+            2. In your JetBrains IDE: **File** → **Settings** → **Plugins**
+            3. Click gear icon → **Install Plugin from Disk...**
+            4. Choose the downloaded `.zip` file and restart IDE
+            
+            **Supported IDEs**: IntelliJ IDEA, WebStorm, PyCharm, Android Studio, PhpStorm, CLion, RubyMine, DataGrip, Rider, GoLand, and other JetBrains IDEs
+            
+            ### Changes
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/CHANGELOG.md) for details.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

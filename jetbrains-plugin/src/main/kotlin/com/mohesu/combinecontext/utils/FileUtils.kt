@@ -84,7 +84,39 @@ object FileUtils {
     fun getMarkdownLangForFile(fileName: String, markdownMapping: Map<String, String>): String {
         val extension = File(fileName).extension.lowercase()
         if (extension.isEmpty()) return ""
-        return markdownMapping[".$extension"] ?: ""
+        
+        // First check custom mapping
+        val key = ".$extension"
+        val language = markdownMapping[key]
+        if (language != null) {
+            return language
+        }
+        
+        // Fallback to built-in mappings (same as VS Code extension)
+        return when (extension) {
+            "js" -> "javascript"
+            "ts" -> "typescript"
+            "md" -> "markdown"
+            "json" -> "json"
+            "sh" -> "bash"
+            "py" -> "python"
+            "java" -> "java"
+            "css" -> "css"
+            "dart" -> "dart"
+            "yml", "yaml" -> "yaml"
+            "kt" -> "kotlin"
+            "xml" -> "xml"
+            "html" -> "html"
+            "php" -> "php"
+            "rb" -> "ruby"
+            "go" -> "go"
+            "rs" -> "rust"
+            "cpp" -> "cpp"
+            "c" -> "c"
+            "h" -> "c"
+            "hpp" -> "cpp"
+            else -> ""
+        }
     }
     
     fun isEscaped(code: String, index: Int): Boolean {

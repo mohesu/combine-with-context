@@ -1,6 +1,15 @@
 # Combine with Context
 
-**A robust, feature-rich way to export code context to a markdown file (`paste.md`) or zip file `context.zip` (for agent mode) for AI/LLM workflows, with advanced filtering, .gitignore support, history/undo, file tree/analysis, content compression, symlink handling, and full customization.**
+- Instantly copy selected code and context to the clipboard for quick sharing or use.
+- Save selections directly as Markdown files for documentation or collaboration.
+- Export chosen files and folders as a ZIP archive for easy transfer or backup.
+- Effortlessly resave your last selection, streamlining repeated workflows.
+- Supports advanced filtering (e.g., `.gitignore`, binary/image exclusion) for clean outputs.
+- Handles large projects efficiently with progress notifications and error handling.
+- Designed for reliability, traceability, and ease of use in production environments.
+
+
+A robust, feature-rich way to export code context to a markdown file (`paste.md`) or zip file `context.zip` (for agent mode) for AI/LLM workflows, with advanced filtering, .gitignore support, history/undo, file tree/analysis, content compression, symlink handling, and full customization.
 
 ## Features
 
@@ -24,7 +33,6 @@
 3. Output will appear in `paste.md` (or your chosen name/folder).
 4. **Undo**: Use the `Undo last paste.md Save` command to restore a recent backup.
 5. **Clipboard**: Use the `CC: Copy to Clipboard` command/menu.
-
 6. **Update**: After you've saved a paste file or ZIP once, you can regenerate it with the latest contents of the same files/folders. Right‑click and choose **CC: Update paste file** or **CC: Update zip file**.
 
 ## Configuration (settings)

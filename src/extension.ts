@@ -7,6 +7,7 @@ import { isBinaryFile, ensureDirExists, timestampString, stripControlChars, getB
 import { getGitIgnore } from './gitIgnoreFilter';
 import { getConfig } from './settings';
 import { getMarkdownLangForFile } from './markdownMapping';
+import yazl from 'yazl';
 
 const WARN_FILE_COUNT = 500;
 const WARN_BYTES_TOTAL = 100 * 1048576; // 100 MB
@@ -128,15 +129,117 @@ async function getFormattedContext(
 
 export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
+    vscode.commands.registerCommand('copyWithContext.copyToClipboard', handleCopyToClipboard),
+    vscode.commands.registerCommand('copyWithContext.saveAsZip', handleSaveAsZip),
     vscode.commands.registerCommand('copyWithContext.saveToPasteFile', handleSaveToPasteFile),
     vscode.commands.registerCommand('copyWithContext.undoLastSave', handleUndoLastSave),
-    vscode.commands.registerCommand('copyWithContext.copyToClipboard', handleCopyToClipboard),
     vscode.commands.registerCommand('copyWithContext.showLog', () => outputChannel?.show(true))
   );
 }
 
 export function deactivate() {
   outputChannel?.dispose();
+}
+
+async function handleSaveAsZip(uri: vscode.Uri, uris?: vscode.Uri[]) {
+  try {
+    if (!vscode.workspace.workspaceFolders?.length) {
+      vscode.window.showWarningMessage('Copy with Context: Please open a folder in VS Code to use this extension.');
+      return;
+    }
+    const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
+    const config = getConfig();
+    let gitIgnoreFilter: ReturnType<typeof ignore> | null = null;
+    if (config.useGitignore) { gitIgnoreFilter = await getGitIgnore(workspaceRoot); }
+
+    const selection = uris && uris.length > 0 ? uris : uri ? [uri] : [];
+    if (selection.length === 0) {
+      vscode.window.showErrorMessage('No files or folders selected.');
+      return;
+    }
+
+    await vscode.window.withProgress(
+      { location: vscode.ProgressLocation.Notification, title: 'Zipping selected files...', cancellable: false },
+      async (progress) => {
+        let collected: { files: vscode.Uri[]; relPaths: string[]; extCounts: Map<string, number> };
+        try {
+          collected = await collectFiles(selection, workspaceRoot, config, gitIgnoreFilter, progress);
+        } catch (err) {
+          vscode.window.showErrorMessage('Copy with Context: Failed to collect files.');
+          log(err);
+          return;
+        }
+        if (collected.files.length === 0) {
+          vscode.window.showWarningMessage('No eligible files found to zip. Check your .gitignore and exclusion settings.');
+          return;
+        }
+
+        // Estimate size and warn if huge
+        let totalBytes = 0;
+        for (const fileUri of collected.files) {
+          const stat = await vscode.workspace.fs.stat(fileUri);
+          totalBytes += stat.size;
+        }
+        if (collected.files.length > WARN_FILE_COUNT || totalBytes > WARN_BYTES_TOTAL) {
+          const proceed = await vscode.window.showQuickPick(['Proceed', 'Cancel'], {
+            placeHolder: `You are about to zip ${collected.files.length} files / ${(totalBytes / 1048576).toFixed(2)}MB. Proceed?`,
+          });
+          if (proceed !== 'Proceed') { return; }
+        }
+
+        // Output path
+        const outDir = (config.outputSubfolder?.trim())
+          ? path.join(workspaceRoot, config.outputSubfolder.trim())
+          : workspaceRoot;
+        ensureDirExists(outDir);
+        const zipPath = path.join(outDir, config.zipFileName || 'context.zip');
+
+        // Optional backup of existing zip
+        if (fs.existsSync(zipPath)) {
+          try {
+            const historyDir = path.join(workspaceRoot, config.historyFolder || '.llm-context-history');
+            ensureDirExists(historyDir);
+            const ts = timestampString();
+            const base = path.basename(zipPath, '.zip');
+            const backup = path.join(historyDir, `${base}.${ts}.zip`);
+            fs.copyFileSync(zipPath, backup);
+            log(`Backup created: ${backup}`);
+          } catch (err) {
+            log(err);
+          }
+        }
+
+        // Create the ZIP (streaming)
+        const zipfile = new yazl.ZipFile();
+        const writeStream = fs.createWriteStream(zipPath);
+        const zipStream = zipfile.outputStream.pipe(writeStream);
+
+        for (let i = 0; i < collected.files.length; i++) {
+          const fileUri = collected.files[i];
+          const rel = path.relative(workspaceRoot, fileUri.fsPath).replace(/\\/g, '/');
+          try {
+            const buf = Buffer.from(await vscode.workspace.fs.readFile(fileUri));
+            zipfile.addBuffer(buf, rel);
+            if (i % 50 === 0) { progress.report({ message: `Added ${i + 1}/${collected.files.length} files...` }); }
+          } catch (e) {
+            log(e);
+          }
+        }
+
+        zipfile.end();
+
+        await new Promise<void>((resolve, reject) => {
+          zipStream.on('close', () => resolve());
+          zipStream.on('error', (e: unknown) => reject(e));
+        });
+
+        vscode.window.showInformationMessage(`ZIP written to: ${zipPath}`);
+      }
+    );
+  } catch (err) {
+    vscode.window.showErrorMessage('Copy with Context: Unexpected error while zipping.');
+    log(err);
+  }
 }
 
 async function handleSaveToPasteFile(uri: vscode.Uri, uris?: vscode.Uri[]) {
@@ -198,7 +301,9 @@ async function handleSaveToPasteFile(uri: vscode.Uri, uris?: vscode.Uri[]) {
             const historyDir = path.join(workspaceRoot, config.historyFolder || '.llm-context-history');
             ensureDirExists(historyDir);
             const ts = timestampString();
-            const backupFile = path.join(historyDir, `paste.${ts}.md`);
+            const ext = path.extname(config.outputFileName || 'paste.md') || '.md';
+            const base = path.basename(config.outputFileName || 'paste.md', ext) || 'paste';
+            const backupFile = path.join(historyDir, `${base}.${ts}${ext}`);
             fs.copyFileSync(outputFile, backupFile);
             log(`Backup created: ${backupFile}`);
           } catch (backupErr) {

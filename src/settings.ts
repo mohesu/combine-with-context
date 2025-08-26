@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 export function getConfig() {
   const config = vscode.workspace.getConfiguration('copyWithContext');
   return {
+    zipFileName: config.get<string>('zipFileName', 'context.zip')!,
     outputFileName: config.get<string>('outputFileName', 'paste.md')!,
     appendMode: config.get<boolean>('appendMode', false),
     includeTimestamp: config.get<boolean>('includeTimestamp', true),

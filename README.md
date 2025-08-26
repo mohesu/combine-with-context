@@ -1,6 +1,6 @@
 # Copy with Context VS Code Extension
 
-**A robust, feature-rich way to export code context to a markdown file (`paste.md`) for AI/LLM workflows, with advanced filtering, .gitignore support, history/undo, file tree/analysis, content compression, symlink handling, and full customization.**
+**A robust, feature-rich way to export code context to a markdown file (`paste.md`) or zip file `context.zip` (for agent mode) for AI/LLM workflows, with advanced filtering, .gitignore support, history/undo, file tree/analysis, content compression, symlink handling, and full customization.**
 
 ## Features
 
@@ -49,6 +49,7 @@ Set these in your workspace or global settings:
 
 - Save to paste.md: `Ctrl+Alt+Shift+S`
 - Copy to clipboard: `Ctrl+Alt+Shift+C`
+- Save to context.zip: `Ctrl+Alt+Shift+Z`
 - Undo last save: `Ctrl+Alt+Shift+U`
 
 ## Troubleshooting

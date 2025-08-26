@@ -1,8 +1,8 @@
 {
   "name": "combine-with-context",
-  "displayName": "Combine with Context",
+  "displayName": "Copy with Context",
   "description": "Export project code context in clean Markdown for LLMs. Maps languages, filters files, supports .gitignore and history.",
-  "version": "2.2.4",
+  "version": "2.3.0",
   "publisher": "mohesu",
   "icon": "icon.png",
   "engines": {
@@ -12,54 +12,75 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:copyWithContext.saveToPasteFile",
     "onCommand:copyWithContext.copyToClipboard",
-    "onCommand:copyWithContext.undoLastSave"
+    "onCommand:copyWithContext.saveAsZip",
+    "onCommand:copyWithContext.saveToPasteFile",
+    "onCommand:copyWithContext.undoLastSave",
+    "onCommand:copyWithContext.showLog"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "copyWithContext.saveToPasteFile",
-        "title": "Combine with Context: Save to paste file",
-        "category": "Combine with Context"
+        "command": "copyWithContext.copyToClipboard",
+        "title": "Copy with Context: Copy to Clipboard",
+        "category": "Copy with Context"
       },
       {
-        "command": "copyWithContext.copyToClipboard",
-        "title": "Combine with Context: Copy to Clipboard",
-        "category": "Combine with Context"
+        "command": "copyWithContext.saveAsZip",
+        "title": "Copy with Context: Save selection as ZIP",
+        "category": "Copy with Context"
+      },
+      {
+        "command": "copyWithContext.saveToPasteFile",
+        "title": "Copy with Context: Save to paste file",
+        "category": "Copy with Context"
       },
       {
         "command": "copyWithContext.undoLastSave",
-        "title": "Combine with Context: Undo last paste file Save",
-        "category": "Combine with Context"
+        "title": "Copy with Context: Undo last paste file Save",
+        "category": "Copy with Context"
+      },
+      {
+        "command": "copyWithContext.showLog",
+        "title": "Copy with Context: Show Log",
+        "category": "Copy with Context"
       }
     ],
     "menus": {
       "explorer/context": [
         {
-          "command": "copyWithContext.saveToPasteFile",
+          "command": "copyWithContext.copyToClipboard",
           "group": "9_cutcopypaste@3"
         },
         {
-          "command": "copyWithContext.copyToClipboard",
+          "command": "copyWithContext.saveAsZip",
           "group": "9_cutcopypaste@4"
         },
         {
-          "command": "copyWithContext.undoLastSave",
+          "command": "copyWithContext.saveToPasteFile",
           "group": "9_cutcopypaste@5"
+        },
+        {
+          "command": "copyWithContext.undoLastSave",
+          "group": "9_cutcopypaste@6"
         }
       ]
     },
     "keybindings": [
       {
-        "command": "copyWithContext.saveToPasteFile",
-        "key": "ctrl+alt+shift+s",
+        "command": "copyWithContext.copyToClipboard",
+        "key": "ctrl+alt+shift+c",
         "when": "explorerViewletFocus"
       },
       {
-        "command": "copyWithContext.copyToClipboard",
-        "key": "ctrl+alt+shift+c",
+        "command": "copyWithContext.saveAsZip",
+        "key": "ctrl+alt+shift+z",
+        "when": "explorerViewletFocus"
+      },
+      {
+        "command": "copyWithContext.saveToPasteFile",
+        "key": "ctrl+alt+shift+s",
         "when": "explorerViewletFocus"
       },
       {
@@ -70,11 +91,16 @@
     ],
     "configuration": {
       "type": "object",
-      "title": "Combine with Context configuration",
+      "title": "Copy with Context configuration",
       "properties": {
+        "copyWithContext.zipFileName": {
+          "type": "string",
+          "default": "context.zip",
+          "description": "Name or relative path for the ZIP archive of selected files (placed under outputSubfolder if set)."
+        },
         "copyWithContext.outputFileName": {
           "type": "string",
-          "default": "paste.txt",
+          "default": "paste.md",
           "description": "Name or relative path of the output file."
         },
         "copyWithContext.appendMode": {
@@ -85,7 +111,7 @@
         "copyWithContext.includeTimestamp": {
           "type": "boolean",
           "default": true,
-          "description": "Include timestamp on each save."
+          "description": "Include timestamp on each file block."
         },
         "copyWithContext.filteredExtensions": {
           "type": "array",
@@ -99,10 +125,9 @@
             ".gif",
             ".exe",
             ".dll",
-            ".ico",
-            ".svg"
+            ".ico"
           ],
-          "description": "File extensions to exclude."
+          "description": "File extensions to exclude (text-only is recommended for LLMs)."
         },
         "copyWithContext.maxFileSize": {
           "type": "number",
@@ -121,7 +146,7 @@
         },
         "copyWithContext.separator": {
           "type": "string",
-          "default": "\n---\n",
+          "default": "\n\n",
           "description": "Separator string between files in output."
         },
         "copyWithContext.useGitignore": {
@@ -148,9 +173,34 @@
             },
             ".json": {
               "language": "json"
+            },
+            ".py": {
+              "language": "python"
+            },
+            ".css": {
+              "language": "css"
+            },
+            ".sh": {
+              "language": "bash"
+            },
+            ".yml": {
+              "language": "yaml"
+            },
+            ".yaml": {
+              "language": "yaml"
             }
           },
           "description": "Map file extension to markdown code block language."
+        },
+        "copyWithContext.includeFileTree": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include a file tree at the top of the output."
+        },
+        "copyWithContext.includeFileAnalysis": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include a file type/count analysis summary."
         },
         "copyWithContext.symlinkHandling": {
           "type": "string",
@@ -158,50 +208,50 @@
             "skip",
             "resolve"
           ],
-          "default": "ignore",
-          "description": "How to handle symlinks: ''skip'' to ignore, ''resolve'' to follow symlinks."
+          "default": "skip",
+          "description": "How to handle symlinks: 'skip' to ignore, 'resolve' to follow."
         },
         "copyWithContext.compressContent": {
           "type": "boolean",
           "default": false,
-          "description": "Remove white spaces and comments before saving."
+          "description": "Remove whitespace/comments for selected languages before saving."
         }
       }
     }
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mohesu/combine-with-context.git"
+    "url": "https://github.com/mohesu/combinewithcontext.git"
   },
   "dependencies": {
     "ignore": "^7.0.5",
-    "npm-run-all": "^4.1.5",
-    "pnpm": "^10.14.0"
+    "yazl": "^3.3.1"
   },
   "devDependencies": {
-    "@types/jest": "^30.0.0",
+    "@types/jest": "^29.5.12",
     "@types/node": "^24.1.0",
     "@types/vscode": "^1.99.0",
+    "@types/yazl": "^3.3.0",
     "@typescript-eslint/eslint-plugin": "^8.28.0",
     "@typescript-eslint/parser": "^8.28.0",
     "@vscode/vsce": "^3.6.0",
     "esbuild": "^0.25.8",
     "eslint": "^9.23.0",
-    "jest": "^30.0.0",
-    "ts-jest": "^29.4.0",
+    "jest": "^29.7.0",
+    "npm-run-all": "^4.1.5",
+    "pnpm": "^10.14.0",
+    "ts-jest": "^29.2.5",
     "typescript": "^5.8.3"
   },
   "scripts": {
     "vscode:prepublish": "pnpm run package",
-    "compile": "pnpm run check-types && pnpm run lint && node esbuild.js",
+    "compile": "pnpm run checktypes && pnpm run lint && node esbuild.js",
     "watch": "npm-run-all -p watch:*",
-    "watch:esbuild": "node esbuild.js --watch",
+    "watch:esbuild": "node esbuild.js watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "package": "pnpm run check-types && pnpm run lint && node esbuild.js --production",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
-    "check-types": "tsc --noEmit",
+    "package": "pnpm run checktypes && pnpm run lint && node esbuild.js production",
+    "pretest": "pnpm run compile && pnpm run lint",
+    "checktypes": "tsc --noEmit",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "test": "jest"

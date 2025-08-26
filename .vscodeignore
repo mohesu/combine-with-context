@@ -1,18 +1,19 @@
 # Ignore source files
 src/**
 **/*.ts
-**/*.map # Also excludes .js.map files
+**/*.map
 
-# Ignore build-related folders and files
+# Keep dist (we ship compiled code)
+# dist/
+
+# Build/test temp
 node_modules/
-out/test/** # Ignore test compiled files, but allow out/extension.js
-dist/ # If you ever use a 'dist' folder
-.vscode-test/
-.vscode-test.*
+out/test/**
+.vscodetest/
+.vscodetest.*
 *.tsbuildinfo
-esbuild.js # Assuming this is a build script, not needed in package
 
-# Ignore other development/meta files
+# Dev/meta files
 .gitignore
 .yarnrc
 eslint.config.mjs
@@ -23,9 +24,9 @@ temp/
 developer_readme.md
 project-spec.md
 demo.txt
-copy-with-context-*.vsix
-public/gifs/ # If these are build assets and not needed in the final package
+copywithcontext*.vsix
+public/gifs/
 .DS_Store
-paste.txt # Your output file
-.llm-context-history/ # Your history folder
-.llm-context/ # Another context folder mentioned in .gitignore
+paste.txt
+.llmcontexthistory/
+.llmcontext/

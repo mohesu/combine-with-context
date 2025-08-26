@@ -1,0 +1,56 @@
+name: Release VS Code Extension
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release-vscode:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build extension
+        run: pnpm run package
+
+      - name: Package extension
+        id: package
+        run: |
+          pnpm exec vsce package --no-dependencies
+          echo "vsix-path=$(ls *.vsix)" >> $GITHUB_OUTPUT
+          echo "vsix-name=$(basename $(ls *.vsix))" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ steps.package.outputs.vsix-path }}
+          name: "VS Code Extension ${{ github.ref_name }}"
+          body: |
+            ## VS Code Extension Release ${{ github.ref_name }}
+            
+            ### Installation
+            Download the `.vsix` file and install it in VS Code using:
+            - Command Palette → "Extensions: Install from VSIX..."
+            - Or via command line: `code --install-extension ${{ steps.package.outputs.vsix-name }}`
+            
+            ### Changes
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/CHANGELOG.md) for details.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

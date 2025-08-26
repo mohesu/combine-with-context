@@ -2,10 +2,13 @@
 
 > A robust, feature-rich way to export code context to a markdown file (`paste.md`) or zip file (`context.zip`) for AI/LLM workflows, with advanced filtering, .gitignore support, history/undo, file tree/analysis, content compression, symlink handling, and full customization.
 
+**Now available for both VS Code and JetBrains IDEs!**
+
 ---
 
 ## 📑 Table of Contents
 
+- [🎯 IDE Support](#-ide-support)
 - [✨ Features](#-features)
 - [🛠 Usage](#-usage)
 - [⚙️ Configuration (settings)](#️-configuration-settings)
@@ -13,6 +16,17 @@
 - [🐞 Troubleshooting](#-troubleshooting)
 - [🤝 Contributing](#-contributing)
 - [📜 License](#-license)
+
+---
+
+## 🎯 IDE Support
+
+**VS Code Extension**: Available on the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mohesu.combine-with-context)
+
+**JetBrains Plugin**: Support for IntelliJ IDEA, WebStorm, PyCharm, Android Studio, CLion, PhpStorm, RubyMine, GoLand, Rider, and more!
+- Source code available in the [`jetbrains-plugin/`](./jetbrains-plugin/) directory
+- Full feature parity with VS Code extension
+- Native IDE integration with context menus and keyboard shortcuts
 
 ---
 
@@ -53,6 +67,8 @@
 4. **Undo**: Use the **CC: Undo last save** command to restore the most recent backup.
 5. **Clipboard**: Use the **CC: Copy to Clipboard** command/menu to copy the formatted context directly.
 6. **Update**: After you've saved once, regenerate with **CC: Update last output**.
+
+**📝 Note**: The same functionality is available in JetBrains IDEs (IntelliJ IDEA, WebStorm, PyCharm, etc.) via the JetBrains plugin located in the [`jetbrains-plugin/`](./jetbrains-plugin/) directory.
 
 </details>
 

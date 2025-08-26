@@ -4,6 +4,13 @@ All notable changes to the "combine-with-context" extension will be documented i
 
 ## [2.4.2] - 08-26-2025
 
+### Added
+
+- **JetBrains Plugin Support**: Added complete JetBrains IDE plugin implementation
+- **Cross-Platform Compatibility**: Support for IntelliJ IDEA, WebStorm, PyCharm, Android Studio, and other JetBrains IDEs
+- **Feature Parity**: All VS Code extension features now available in JetBrains IDEs
+- **Native Integration**: Context menu actions, keyboard shortcuts, and settings integration
+
 ### Changed
 
 - **README.md**: Updated the README.md file to be more interactive and scannable.

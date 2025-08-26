@@ -1,6 +1,6 @@
 {
   "name": "combine-with-context",
-  "displayName": "Copy with Context",
+  "displayName": "Combine with Context",
   "description": "Export project code context in clean Markdown for LLMs. Maps languages, filters files, supports .gitignore and history.",
   "version": "2.3.0",
   "publisher": "mohesu",
@@ -23,28 +23,28 @@
     "commands": [
       {
         "command": "copyWithContext.copyToClipboard",
-        "title": "Copy with Context: Copy to Clipboard",
-        "category": "Copy with Context"
+        "title": "CC: Copy to Clipboard",
+        "category": "Combine with Context"
       },
       {
         "command": "copyWithContext.saveAsZip",
-        "title": "Copy with Context: Save selection as ZIP",
-        "category": "Copy with Context"
+        "title": "CC: Save selection as ZIP",
+        "category": "Combine with Context"
       },
       {
         "command": "copyWithContext.saveToPasteFile",
-        "title": "Copy with Context: Save to paste file",
-        "category": "Copy with Context"
+        "title": "CC: Save to paste file",
+        "category": "Combine with Context"
       },
       {
         "command": "copyWithContext.undoLastSave",
-        "title": "Copy with Context: Undo last paste file Save",
-        "category": "Copy with Context"
+        "title": "CC: Undo last paste file Save",
+        "category": "Combine with Context"
       },
       {
         "command": "copyWithContext.showLog",
-        "title": "Copy with Context: Show Log",
-        "category": "Copy with Context"
+        "title": "CC: Show Log",
+        "category": "Combine with Context"
       }
     ],
     "menus": {
@@ -221,7 +221,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mohesu/combinewithcontext.git"
+    "url": "https://github.com/mohesu/combine-with-context.git"
   },
   "dependencies": {
     "ignore": "^7.0.5",

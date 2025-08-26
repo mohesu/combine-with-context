@@ -8,7 +8,6 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -16,12 +15,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'pnpm' # optional but handy
+          node-version: "20"
 
-      # Install pnpm so it is available on the PATH
-      - name: Install pnpm
-        run: npm install -g pnpm
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
@@ -29,23 +28,30 @@ jobs:
       - name: Compile extension
         run: pnpm run compile
 
-      # Optional: create Open VSX namespace if it doesn't exist (non-fatal)
+      - name: Package extension
+        id: package
+        run: |
+          pnpm exec vsce package --no-dependencies
+          echo "vsix-path=$(ls *.vsix)" >> $GITHUB_OUTPUT
+
       - name: Create namespace (if needed)
-        run: npx ovsx create-namespace mohesu --pat "${{ secrets.OPEN_VSX_TOKEN }}" || echo "Namespace may already exist"
+        run: |
+          npm install -g ovsx
+          npx ovsx create-namespace mohesu -p ${{ secrets.OPEN_VSX_TOKEN }} || echo "Namespace might already exist"
         continue-on-error: true
 
-      # Publish once to Open VSX (packages + publishes) and reuse the same VSIX
       - name: Publish to Open VSX Registry
-        id: publishToOpenVSX
-        uses: HaaLeo/publish-vscode-extension@v2
+        uses: HaaLeo/publish-vscode-extension@v1
         with:
           pat: ${{ secrets.OPEN_VSX_TOKEN }}
+          extensionFile: ${{ steps.package.outputs.vsix-path }}
+          registryUrl: https://open-vsx.org
           skipDuplicate: true
 
       - name: Publish to Visual Studio Marketplace (Optional)
-        uses: HaaLeo/publish-vscode-extension@v2
+        uses: HaaLeo/publish-vscode-extension@v1
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com
-          extensionFile: ${{ steps.publishToOpenVSX.outputs.vsixPath }}
+          extensionFile: ${{ steps.package.outputs.vsix-path }}
           skipDuplicate: true

@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*.*.*'
 
+permissions:
+  contents: write
+
 jobs:
   release-vscode:
     runs-on: ubuntu-latest
@@ -36,7 +39,7 @@ jobs:
           echo "vsix-name=$(basename $(ls *.vsix))" >> $GITHUB_OUTPUT
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: ${{ steps.package.outputs.vsix-path }}
           name: "VS Code Extension ${{ github.ref_name }}"

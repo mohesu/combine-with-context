@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*.*.*'
 
+permissions:
+  contents: write
+
 jobs:
   release-intellij:
     runs-on: ubuntu-latest
@@ -19,7 +22,7 @@ jobs:
           java-version: '17'
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
 
       - name: Make gradlew executable
         working-directory: ./jetbrains-plugin
@@ -36,12 +39,11 @@ jobs:
           PLUGIN_PATH=$(find build/distributions -name "*.zip" -type f | head -1)
           echo "plugin-path=${PLUGIN_PATH}" >> $GITHUB_OUTPUT
           echo "plugin-name=$(basename ${PLUGIN_PATH})" >> $GITHUB_OUTPUT
-          echo "plugin-full-path=jetbrains-plugin/${PLUGIN_PATH}" >> $GITHUB_OUTPUT
-
+          
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          files: ${{ steps.plugin.outputs.plugin-full-path }}
+          files: jetbrains-plugin/${{ steps.plugin.outputs.plugin-path }}
           name: "JetBrains Plugin ${{ github.ref_name }}"
           body: |
             ## JetBrains Plugin Release ${{ github.ref_name }}

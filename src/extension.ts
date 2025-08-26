@@ -11,6 +11,16 @@ import yazl from 'yazl';
 
 const WARN_FILE_COUNT = 500;
 const WARN_BYTES_TOTAL = 100 * 1048576; // 100 MB
+
+// Keep track of the last selections used to generate a paste or ZIP file.  When
+// the user invokes the update commands, these arrays are used to re-run the
+// same operation over the previously selected files/directories.  They are
+// scoped at the module level so that their contents persist for the lifetime
+// of the extension (and across successive command invocations within the
+// session).  If no previous selection has been made, the update commands
+// gracefully inform the user.
+let lastPasteSelection: vscode.Uri[] | null = null;
+let lastZipSelection: vscode.Uri[] | null = null;
 let outputChannel: vscode.OutputChannel | undefined;
 
 function log(message: unknown) {
@@ -133,12 +143,63 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('copyWithContext.saveAsZip', handleSaveAsZip),
     vscode.commands.registerCommand('copyWithContext.saveToPasteFile', handleSaveToPasteFile),
     vscode.commands.registerCommand('copyWithContext.undoLastSave', handleUndoLastSave),
+    vscode.commands.registerCommand('copyWithContext.updatePasteFile', handleUpdateLastPasteFile),
+    vscode.commands.registerCommand('copyWithContext.updateZipFile', handleUpdateLastZipFile),
     vscode.commands.registerCommand('copyWithContext.showLog', () => outputChannel?.show(true))
   );
 }
 
 export function deactivate() {
   outputChannel?.dispose();
+}
+
+// Command: copyWithContext.updatePasteFile
+// Re-run the paste file generation using the most recent selection.  If no
+// selection has been recorded yet, the user is informed.  This leverages
+// handleSaveToPasteFile to perform the heavy lifting and maintain existing
+// backup/append logic.  The first argument is used only when no explicit
+// list is provided; passing the first element of the recorded selection is
+// sufficient because the function prioritises the `uris` array when
+// provided.
+async function handleUpdateLastPasteFile() {
+  try {
+    if (!vscode.workspace.workspaceFolders?.length) {
+      vscode.window.showWarningMessage('Copy with Context: Please open a folder in VS Code to use this extension.');
+      return;
+    }
+    if (!lastPasteSelection || lastPasteSelection.length === 0) {
+      vscode.window.showWarningMessage('Copy with Context: No previous paste file selection found to update. Save a paste file first.');
+      return;
+    }
+    // Reuse the existing save handler with the stored selection.  Pass the
+    // first URI from the list as the primary argument; handleSaveToPasteFile
+    // will ignore it when the second argument (uris) is provided.
+    await handleSaveToPasteFile(lastPasteSelection[0], lastPasteSelection);
+  } catch (err) {
+    vscode.window.showErrorMessage('Copy with Context: Unexpected error during paste file update.');
+    log(err);
+  }
+}
+
+// Command: copyWithContext.updateZipFile
+// Re-run the ZIP archive generation using the most recent selection.  If
+// nothing has been zipped yet, alert the user.  This function reuses the
+// existing zipping logic via handleSaveAsZip.
+async function handleUpdateLastZipFile() {
+  try {
+    if (!vscode.workspace.workspaceFolders?.length) {
+      vscode.window.showWarningMessage('Copy with Context: Please open a folder in VS Code to use this extension.');
+      return;
+    }
+    if (!lastZipSelection || lastZipSelection.length === 0) {
+      vscode.window.showWarningMessage('Copy with Context: No previous zip selection found to update. Save a zip first.');
+      return;
+    }
+    await handleSaveAsZip(lastZipSelection[0], lastZipSelection);
+  } catch (err) {
+    vscode.window.showErrorMessage('Copy with Context: Unexpected error during zip update.');
+    log(err);
+  }
 }
 
 async function handleSaveAsZip(uri: vscode.Uri, uris?: vscode.Uri[]) {
@@ -234,6 +295,13 @@ async function handleSaveAsZip(uri: vscode.Uri, uris?: vscode.Uri[]) {
         });
 
         vscode.window.showInformationMessage(`ZIP written to: ${zipPath}`);
+
+        // Persist the selection so the user can update the ZIP later.  We
+        // deliberately record the original selection (directories and files) rather
+        // than the fully expanded list of files, so that re-running the
+        // collection logic on update picks up any new or removed files under
+        // selected folders.
+        lastZipSelection = selection;
       }
     );
   } catch (err) {
@@ -325,6 +393,13 @@ async function handleSaveToPasteFile(uri: vscode.Uri, uris?: vscode.Uri[]) {
         }
 
         vscode.window.showInformationMessage(`Context written to: ${outputFile}`);
+
+        // Persist the selection so that the user can invoke the update command
+        // later to regenerate the paste file based on the same directories or
+        // files.  Recording the selection rather than the expanded file list
+        // means that new files added under the selected folders will be
+        // included on update and removed files will be skipped.
+        lastPasteSelection = selection;
         if (config.openAfterSave) {
           try {
             const doc = await vscode.workspace.openTextDocument(outputFile);

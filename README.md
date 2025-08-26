@@ -1,10 +1,11 @@
-# Copy with Context VS Code Extension
+# Combine with Context
 
 **A robust, feature-rich way to export code context to a markdown file (`paste.md`) or zip file `context.zip` (for agent mode) for AI/LLM workflows, with advanced filtering, .gitignore support, history/undo, file tree/analysis, content compression, symlink handling, and full customization.**
 
 ## Features
 
 - **Multi-select**: Select any files and/or folders in VS Code Explorer.
+- **Re-save/Update outputs**: Once you've created a paste file or ZIP archive, you can regenerate it later using the same selection without reselecting files.
 - **LLM-friendly Markdown**: Each file block is clearly marked (with path, code block, timestamp); optional file tree and type-wise analysis.
 - **Smart filtering**: Excludes binary files, images, large/empty files, and recognizes `.gitignore`.
 - **Content compression**: Minifies code (trim whitespace, remove comments for JS/TS, Python, CSS) when enabled.
@@ -19,10 +20,12 @@
 ## Usage
 
 1. **Select files/folders** in the VS Code Explorer.
-2. **Right-click**, choose **Copy with Context: Save to paste.md**.
+2. **Right-click**, choose **CC: Save to paste.md**.
 3. Output will appear in `paste.md` (or your chosen name/folder).
 4. **Undo**: Use the `Undo last paste.md Save` command to restore a recent backup.
-5. **Clipboard**: Use the `Copy with Context: Copy to Clipboard` command/menu.
+5. **Clipboard**: Use the `CC: Copy to Clipboard` command/menu.
+
+6. **Update**: After you've saved a paste file or ZIP once, you can regenerate it with the latest contents of the same files/folders. Right‑click and choose **CC: Update paste file** or **CC: Update zip file**.
 
 ## Configuration (settings)
 
@@ -37,7 +40,7 @@ Set these in your workspace or global settings:
 | maxFileSize                      | 5242880 (5MB)           | Per-file max size                           |
 | outputSubfolder                  | "" (root)               | Subfolder for output (optional)             |
 | openAfterSave                    | true                    | Open file after writing                     |
-| separator                        | "\n---\n"               | Markdown separator between file blocks      |
+| separator                        | "\n\n"                  | Markdown separator between file blocks      |
 | useGitignore                     | true                    | Use `.gitignore` for filtering              |
 | historyFolder                    | `.llm-context-history`  | History folder for backups                  |
 | includeFileTree                  | true                    | Include file tree in output                 |

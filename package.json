@@ -2,7 +2,7 @@
   "name": "combine-with-context",
   "displayName": "Combine with Context",
   "description": "Export project code context in clean Markdown for LLMs. Maps languages, filters files, supports .gitignore and history.",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "publisher": "mohesu",
   "icon": "icon.png",
   "engines": {
@@ -14,7 +14,9 @@
   "activationEvents": [
     "onCommand:copyWithContext.copyToClipboard",
     "onCommand:copyWithContext.saveAsZip",
+    "onCommand:copyWithContext.updateZipFile",
     "onCommand:copyWithContext.saveToPasteFile",
+    "onCommand:copyWithContext.updatePasteFile",
     "onCommand:copyWithContext.undoLastSave",
     "onCommand:copyWithContext.showLog"
   ],
@@ -32,8 +34,18 @@
         "category": "Combine with Context"
       },
       {
+        "command": "copyWithContext.updateZipFile",
+        "title": "CC: Update zip file",
+        "category": "Combine with Context"
+      },
+      {
         "command": "copyWithContext.saveToPasteFile",
         "title": "CC: Save to paste file",
+        "category": "Combine with Context"
+      },
+      {
+        "command": "copyWithContext.updatePasteFile",
+        "title": "CC: Update paste file",
         "category": "Combine with Context"
       },
       {
@@ -58,12 +70,20 @@
           "group": "9_cutcopypaste@4"
         },
         {
-          "command": "copyWithContext.saveToPasteFile",
+          "command": "copyWithContext.updatePasteFile",
           "group": "9_cutcopypaste@5"
         },
         {
-          "command": "copyWithContext.undoLastSave",
+          "command": "copyWithContext.saveToPasteFile",
           "group": "9_cutcopypaste@6"
+        },
+        {
+          "command": "copyWithContext.updateZipFile",
+          "group": "9_cutcopypaste@7"
+        },
+        {
+          "command": "copyWithContext.undoLastSave",
+          "group": "9_cutcopypaste@8"
         }
       ]
     },

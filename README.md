@@ -14,13 +14,13 @@ A robust, feature-rich way to export code context to a markdown file (`paste.md`
 ## Features
 
 - **Multi-select**: Select any files and/or folders in VS Code Explorer.
-- **Re-save/Update outputs**: Once you've created a paste file or ZIP archive, you can regenerate it later using the same selection without reselecting files.
+- **Re-save/Update last output**: Once you've created a paste file or ZIP archive, you can regenerate it later using the same selection without reselecting files.  A single **Update last output** command determines which format to rebuild based on your most recent save.
 - **LLM-friendly Markdown**: Each file block is clearly marked (with path, code block, timestamp); optional file tree and type-wise analysis.
 - **Smart filtering**: Excludes binary files, images, large/empty files, and recognizes `.gitignore`.
 - **Content compression**: Minifies code (trim whitespace, remove comments for JS/TS, Python, CSS) when enabled.
 - **Symlink handling**: Configurable to skip or resolve symlinks.
 - **User configuration**: Change output file, folder, append/overwrite, excludes, separators, etc., via settings.
-- **One-click undo**: Restore a previous paste.md from history.
+- **One-click undo**: Restore a previous paste or ZIP file from history.
 - **Clipboard mode**: Optionally copy context directly to clipboard.
 - **Progress & warnings**: Notifies if selection is very large (lots of files or total MBs).
 - **Output channel logging**: For debugging and traceability.
@@ -28,12 +28,12 @@ A robust, feature-rich way to export code context to a markdown file (`paste.md`
 
 ## Usage
 
-1. **Select files/folders** in the VS Code Explorer.
-2. **Right-click**, choose **CC: Save to paste.md**.
-3. Output will appear in `paste.md` (or your chosen name/folder).
-4. **Undo**: Use the `Undo last paste.md Save` command to restore a recent backup.
-5. **Clipboard**: Use the `CC: Copy to Clipboard` command/menu.
-6. **Update**: After you've saved a paste file or ZIP once, you can regenerate it with the latest contents of the same files/folders. Right‑click and choose **CC: Update paste file** or **CC: Update zip file**.
+1. **Select files/folders** in the VS Code Explorer.
+2. **Right‑click** and choose **Save As → Save to paste file** or **Save As → Save selection as ZIP**.  The selected files will be aggregated and saved to your configured Markdown (`paste.md` by default) or ZIP (`context.zip` by default) file.
+3. The output will appear in the designated file (or your chosen name/folder).
+4. **Undo**: Use the **CC: Undo last save** command to restore the most recent backup of your paste or ZIP file.
+5. **Clipboard**: Use the **CC: Copy to Clipboard** command/menu to copy the formatted context directly.
+6. **Update**: After you've saved a paste or ZIP once, you can regenerate the output with the latest contents of the same files/folders. Right‑click and choose **CC: Update last output**; the extension will determine which format to regenerate based on your most recent save.
 
 ## Configuration (settings)
 
@@ -67,7 +67,7 @@ Set these in your workspace or global settings:
 
 - If no files appear: Check filteredExtensions, .gitignore, file size limits, or empty files.
 - If output isn't updated: Confirm permissions and path.
-- For debugging: Run the "Copy with Context: Show Log" command to see output logs.
+- For debugging: Run the "CC: Show Log" command to see output logs.
 
 ## Contributing
 

@@ -13,18 +13,70 @@ const WARN_FILE_COUNT = 500;
 const WARN_BYTES_TOTAL = 100 * 1048576; // 100 MB
 
 // Keep track of the last selections used to generate a paste or ZIP file.  When
-// the user invokes the update commands, these arrays are used to re-run the
+// the user invokes the update command, these arrays are used to re-run the
 // same operation over the previously selected files/directories.  They are
 // scoped at the module level so that their contents persist for the lifetime
 // of the extension (and across successive command invocations within the
-// session).  If no previous selection has been made, the update commands
-// gracefully inform the user.
+// session).  If no previous selection has been made, the update command
+// gracefully informs the user.  In addition to recording the selections, we
+// also record which type of operation ("paste" or "zip") was performed last
+// so that the unified update command can choose the correct handler.
 let lastPasteSelection: vscode.Uri[] | null = null;
 let lastZipSelection: vscode.Uri[] | null = null;
+let lastAction: 'paste' | 'zip' | null = null;
 let outputChannel: vscode.OutputChannel | undefined;
 
+/**
+ * Ensure that certain paths are listed in the ignore files of the workspace root.
+ * This function updates the `.gitignore` in the workspace root by appending the
+ * given patterns if they are not already present.  The patterns can be
+ * directory names (ending with `/`) or file names.  If no `.gitignore` file
+ * exists, one is created.  Any errors are logged but do not halt execution.
+ *
+ * We intentionally ignore `.vscodeignore` here because it is used only for
+ * packaging VS Code extensions and not relevant for a user's workspace.  The
+ * `.gitignore` file is common to most projects and will prevent unwanted
+ * files/folders from being tracked by version control.
+ *
+ * @param workspaceRoot The absolute path to the workspace root
+ * @param patterns A list of patterns (e.g. 'paste.md', 'context.zip', '.llm-context-history/') to append
+ */
+function ensureIgnored(workspaceRoot: string, patterns: string[]): void {
+  try {
+    const gitIgnorePath = path.join(workspaceRoot, '.gitignore');
+    let content = '';
+    if (fs.existsSync(gitIgnorePath)) {
+      content = fs.readFileSync(gitIgnorePath, 'utf8');
+    }
+    let changed = false;
+    for (const pat of patterns) {
+      // If the file already contains the pattern on a line by itself, skip.
+      // We use a simple string includes check to avoid regex complexity.
+      if (!content.split(/\r?\n/).some((line) => line.trim() === pat)) {
+        if (content.length > 0 && !content.endsWith('\n')) {
+          content += '\n';
+        }
+        content += pat + '\n';
+        changed = true;
+      }
+    }
+    if (changed) {
+      fs.writeFileSync(gitIgnorePath, content, 'utf8');
+      log(`Updated .gitignore with patterns: ${patterns.join(', ')}`);
+    }
+  } catch (err) {
+    log(err);
+  }
+}
+
 function log(message: unknown) {
-  if (!outputChannel) {outputChannel = vscode.window.createOutputChannel('Copy with Context');}
+  // Lazily create the output channel the first time a log message is written.  The
+  // channel is named using the user-facing extension title so that it remains
+  // consistent across all messages and appears clearly in VS Code.  Use
+  // "Combine with Context" here rather than the legacy "Copy with Context".
+  if (!outputChannel) {
+    outputChannel = vscode.window.createOutputChannel('Combine with Context');
+  }
   const show = typeof message === 'string' ? message : (message && typeof message === 'object' && 'message' in message) ? String((message as any).message) : JSON.stringify(message, null, 2);
   outputChannel.appendLine(`[${new Date().toLocaleTimeString()}] ${show}`);
 }
@@ -143,8 +195,11 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('copyWithContext.saveAsZip', handleSaveAsZip),
     vscode.commands.registerCommand('copyWithContext.saveToPasteFile', handleSaveToPasteFile),
     vscode.commands.registerCommand('copyWithContext.undoLastSave', handleUndoLastSave),
-    vscode.commands.registerCommand('copyWithContext.updatePasteFile', handleUpdateLastPasteFile),
-    vscode.commands.registerCommand('copyWithContext.updateZipFile', handleUpdateLastZipFile),
+    // Unified update command: determines whether to regenerate the paste file or
+    // ZIP archive based on whichever action was performed last.  This
+    // supersedes the older update commands which were tied to a specific
+    // output format.
+    vscode.commands.registerCommand('copyWithContext.updateLast', handleUpdateLast),
     vscode.commands.registerCommand('copyWithContext.showLog', () => outputChannel?.show(true))
   );
 }
@@ -153,51 +208,35 @@ export function deactivate() {
   outputChannel?.dispose();
 }
 
-// Command: copyWithContext.updatePasteFile
-// Re-run the paste file generation using the most recent selection.  If no
-// selection has been recorded yet, the user is informed.  This leverages
-// handleSaveToPasteFile to perform the heavy lifting and maintain existing
-// backup/append logic.  The first argument is used only when no explicit
-// list is provided; passing the first element of the recorded selection is
-// sufficient because the function prioritises the `uris` array when
-// provided.
-async function handleUpdateLastPasteFile() {
+// Unified update command.  Re-run whichever action (paste or zip) was
+// performed most recently using the stored selections.  If no previous
+// operation has been performed yet, the user is informed.  This command
+// delegates back to handleSaveToPasteFile or handleSaveAsZip accordingly.
+async function handleUpdateLast() {
   try {
     if (!vscode.workspace.workspaceFolders?.length) {
-      vscode.window.showWarningMessage('Copy with Context: Please open a folder in VS Code to use this extension.');
+      vscode.window.showWarningMessage('Combine with Context: Please open a folder in VS Code to use this extension.');
       return;
     }
-    if (!lastPasteSelection || lastPasteSelection.length === 0) {
-      vscode.window.showWarningMessage('Copy with Context: No previous paste file selection found to update. Save a paste file first.');
+    if (!lastAction) {
+      vscode.window.showWarningMessage('Combine with Context: No previous operation found to update. Save a paste file or ZIP archive first.');
       return;
     }
-    // Reuse the existing save handler with the stored selection.  Pass the
-    // first URI from the list as the primary argument; handleSaveToPasteFile
-    // will ignore it when the second argument (uris) is provided.
-    await handleSaveToPasteFile(lastPasteSelection[0], lastPasteSelection);
+    if (lastAction === 'paste') {
+      if (!lastPasteSelection || lastPasteSelection.length === 0) {
+        vscode.window.showWarningMessage('Combine with Context: No previous paste file selection found to update. Save a paste file first.');
+        return;
+      }
+      await handleSaveToPasteFile(lastPasteSelection[0], lastPasteSelection);
+    } else if (lastAction === 'zip') {
+      if (!lastZipSelection || lastZipSelection.length === 0) {
+        vscode.window.showWarningMessage('Combine with Context: No previous ZIP selection found to update. Save a ZIP archive first.');
+        return;
+      }
+      await handleSaveAsZip(lastZipSelection[0], lastZipSelection);
+    }
   } catch (err) {
-    vscode.window.showErrorMessage('Copy with Context: Unexpected error during paste file update.');
-    log(err);
-  }
-}
-
-// Command: copyWithContext.updateZipFile
-// Re-run the ZIP archive generation using the most recent selection.  If
-// nothing has been zipped yet, alert the user.  This function reuses the
-// existing zipping logic via handleSaveAsZip.
-async function handleUpdateLastZipFile() {
-  try {
-    if (!vscode.workspace.workspaceFolders?.length) {
-      vscode.window.showWarningMessage('Copy with Context: Please open a folder in VS Code to use this extension.');
-      return;
-    }
-    if (!lastZipSelection || lastZipSelection.length === 0) {
-      vscode.window.showWarningMessage('Copy with Context: No previous zip selection found to update. Save a zip first.');
-      return;
-    }
-    await handleSaveAsZip(lastZipSelection[0], lastZipSelection);
-  } catch (err) {
-    vscode.window.showErrorMessage('Copy with Context: Unexpected error during zip update.');
+    vscode.window.showErrorMessage('Combine with Context: Unexpected error during update.');
     log(err);
   }
 }
@@ -205,7 +244,7 @@ async function handleUpdateLastZipFile() {
 async function handleSaveAsZip(uri: vscode.Uri, uris?: vscode.Uri[]) {
   try {
     if (!vscode.workspace.workspaceFolders?.length) {
-      vscode.window.showWarningMessage('Copy with Context: Please open a folder in VS Code to use this extension.');
+      vscode.window.showWarningMessage('Combine with Context: Please open a folder in VS Code to use this extension.');
       return;
     }
     const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
@@ -226,7 +265,7 @@ async function handleSaveAsZip(uri: vscode.Uri, uris?: vscode.Uri[]) {
         try {
           collected = await collectFiles(selection, workspaceRoot, config, gitIgnoreFilter, progress);
         } catch (err) {
-          vscode.window.showErrorMessage('Copy with Context: Failed to collect files.');
+          vscode.window.showErrorMessage('Combine with Context: Failed to collect files.');
           log(err);
           return;
         }
@@ -296,16 +335,31 @@ async function handleSaveAsZip(uri: vscode.Uri, uris?: vscode.Uri[]) {
 
         vscode.window.showInformationMessage(`ZIP written to: ${zipPath}`);
 
+        // Ensure that the zip file and history folder are ignored in version control.  This
+        // writes to the workspace's `.gitignore` if needed.  Use relative patterns so
+        // that they are interpreted correctly from the root.  Include a trailing slash
+        // for directories to signal that the entire folder should be ignored.
+        const ignorePatterns: string[] = [];
+        const zipRel = path.basename(zipPath);
+        ignorePatterns.push(zipRel);
+        const histFolder = config.historyFolder || '.llm-context-history';
+        // Ensure history folder ends with slash when added to .gitignore
+        ignorePatterns.push(histFolder.endsWith('/') ? histFolder : `${histFolder}/`);
+        ensureIgnored(workspaceRoot, ignorePatterns);
+
         // Persist the selection so the user can update the ZIP later.  We
         // deliberately record the original selection (directories and files) rather
         // than the fully expanded list of files, so that re-running the
         // collection logic on update picks up any new or removed files under
         // selected folders.
         lastZipSelection = selection;
+        // Record this as the most recent operation so that the unified update
+        // command can regenerate the correct output on demand.
+        lastAction = 'zip';
       }
     );
   } catch (err) {
-    vscode.window.showErrorMessage('Copy with Context: Unexpected error while zipping.');
+    vscode.window.showErrorMessage('Combine with Context: Unexpected error while zipping.');
     log(err);
   }
 }
@@ -313,7 +367,7 @@ async function handleSaveAsZip(uri: vscode.Uri, uris?: vscode.Uri[]) {
 async function handleSaveToPasteFile(uri: vscode.Uri, uris?: vscode.Uri[]) {
   try {
     if (!vscode.workspace.workspaceFolders?.length) {
-      vscode.window.showWarningMessage('Copy with Context: Please open a folder in VS Code to use this extension.');
+      vscode.window.showWarningMessage('Combine with Context: Please open a folder in VS Code to use this extension.');
       return;
     }
     const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
@@ -343,7 +397,7 @@ async function handleSaveToPasteFile(uri: vscode.Uri, uris?: vscode.Uri[]) {
         try {
           collected = await collectFiles(selection, workspaceRoot, config, gitIgnoreFilter, progress);
         } catch (err) {
-          vscode.window.showErrorMessage(`Copy with Context: Failed to collect files.`);
+          vscode.window.showErrorMessage(`Combine with Context: Failed to collect files.`);
           log(err);
           return;
         }
@@ -375,7 +429,7 @@ async function handleSaveToPasteFile(uri: vscode.Uri, uris?: vscode.Uri[]) {
             fs.copyFileSync(outputFile, backupFile);
             log(`Backup created: ${backupFile}`);
           } catch (backupErr) {
-            vscode.window.showWarningMessage(`Copy with Context: Failed to backup existing paste file.`);
+            vscode.window.showWarningMessage(`Combine with Context: Failed to backup existing paste file.`);
             log(backupErr);
           }
         }
@@ -387,12 +441,23 @@ async function handleSaveToPasteFile(uri: vscode.Uri, uris?: vscode.Uri[]) {
           }
           log(`Wrote context to ${outputFile}`);
         } catch (fileErr) {
-          vscode.window.showErrorMessage(`Copy with Context: Error writing to output file.`);
+          vscode.window.showErrorMessage(`Combine with Context: Error writing to output file.`);
           log(fileErr);
           return;
         }
 
         vscode.window.showInformationMessage(`Context written to: ${outputFile}`);
+
+        // Ensure that the paste file and history folder are ignored in version control.  Use
+        // relative patterns when appending to .gitignore.  The output file name may be
+        // specified with subdirectories; only add the basename here.  Append a trailing
+        // slash to the history folder to indicate it is a directory.
+        const ignorePatterns: string[] = [];
+        const outputRel = path.basename(outputFile);
+        ignorePatterns.push(outputRel);
+        const histFolder = config.historyFolder || '.llm-context-history';
+        ignorePatterns.push(histFolder.endsWith('/') ? histFolder : `${histFolder}/`);
+        ensureIgnored(workspaceRoot, ignorePatterns);
 
         // Persist the selection so that the user can invoke the update command
         // later to regenerate the paste file based on the same directories or
@@ -400,6 +465,9 @@ async function handleSaveToPasteFile(uri: vscode.Uri, uris?: vscode.Uri[]) {
         // means that new files added under the selected folders will be
         // included on update and removed files will be skipped.
         lastPasteSelection = selection;
+        // Mark this as the most recent operation so that the unified update
+        // command knows to rebuild a paste file rather than a ZIP archive.
+        lastAction = 'paste';
         if (config.openAfterSave) {
           try {
             const doc = await vscode.workspace.openTextDocument(outputFile);
@@ -411,7 +479,7 @@ async function handleSaveToPasteFile(uri: vscode.Uri, uris?: vscode.Uri[]) {
       }
     );
   } catch (err) {
-    vscode.window.showErrorMessage('Copy with Context: Unexpected error.');
+    vscode.window.showErrorMessage('Combine with Context: Unexpected error.');
     log(err);
   }
 }
@@ -419,7 +487,7 @@ async function handleSaveToPasteFile(uri: vscode.Uri, uris?: vscode.Uri[]) {
 async function handleUndoLastSave() {
   try {
     if (!vscode.workspace.workspaceFolders?.length) {
-      vscode.window.showWarningMessage('Copy with Context: Please open a folder in VS Code to use this extension.');
+      vscode.window.showWarningMessage('Combine with Context: Please open a folder in VS Code to use this extension.');
       return;
     }
     const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
@@ -427,36 +495,67 @@ async function handleUndoLastSave() {
     const outputDir = config.outputSubfolder.trim()
       ? path.join(workspaceRoot, config.outputSubfolder.trim())
       : workspaceRoot;
-    const outputFile = path.join(outputDir, config.outputFileName);
     const historyDir = path.join(workspaceRoot, config.historyFolder || '.llm-context-history');
     if (!fs.existsSync(historyDir)) {
-      vscode.window.showWarningMessage('No backup history found to undo.');
+      vscode.window.showWarningMessage('Combine with Context: No backup history found to undo.');
       return;
     }
-    const backups = fs
-      .readdirSync(historyDir)
-      .filter((f) => f.startsWith('paste.') && f.endsWith('.md'))
-      .sort()
-      .reverse();
-    if (backups.length === 0) {
-      vscode.window.showWarningMessage('No previous backup found.');
-      return;
-    }
-    const lastBackup = path.join(historyDir, backups[0]);
-    try {
-      fs.copyFileSync(lastBackup, outputFile);
-      log(`Undo: Restored ${outputFile} from ${lastBackup}`);
-      vscode.window.showInformationMessage('paste file has been restored from most recent backup.');
-      if (config.openAfterSave) {
-        const doc = await vscode.workspace.openTextDocument(outputFile);
-        vscode.window.showTextDocument(doc, { preview: false });
+    // Determine which kind of file we need to restore based on the last action
+    if (lastAction === 'zip') {
+      // Undo the last ZIP creation.  Compute the output path and find the most
+      // recent backup matching the configured ZIP filename.
+      const zipFileName = config.zipFileName || 'context.zip';
+      const zipPath = path.join(outputDir, zipFileName);
+      const base = path.basename(zipFileName, '.zip');
+      const backups = fs
+        .readdirSync(historyDir)
+        .filter((f) => f.startsWith(`${base}.`) && f.endsWith('.zip'))
+        .sort()
+        .reverse();
+      if (backups.length === 0) {
+        vscode.window.showWarningMessage('Combine with Context: No previous ZIP backup found.');
+        return;
       }
-    } catch (cpErr) {
-      vscode.window.showErrorMessage('Failed to restore paste file from backup.');
-      log(cpErr);
+      const lastBackup = path.join(historyDir, backups[0]);
+      try {
+        fs.copyFileSync(lastBackup, zipPath);
+        log(`Undo: Restored ${zipPath} from ${lastBackup}`);
+        vscode.window.showInformationMessage('Your ZIP archive has been restored from the most recent backup.');
+      } catch (cpErr) {
+        vscode.window.showErrorMessage('Combine with Context: Failed to restore ZIP archive from backup.');
+        log(cpErr);
+      }
+    } else {
+      // Default to undoing paste file creation.  Compute the output path and
+      // find the most recent backup matching the configured paste filename.
+      const outputFile = path.join(outputDir, config.outputFileName);
+      const ext = path.extname(config.outputFileName || 'paste.md') || '.md';
+      const base = path.basename(config.outputFileName || 'paste.md', ext) || 'paste';
+      const backups = fs
+        .readdirSync(historyDir)
+        .filter((f) => f.startsWith(`${base}.`) && f.endsWith(ext))
+        .sort()
+        .reverse();
+      if (backups.length === 0) {
+        vscode.window.showWarningMessage('Combine with Context: No previous backup found.');
+        return;
+      }
+      const lastBackup = path.join(historyDir, backups[0]);
+      try {
+        fs.copyFileSync(lastBackup, outputFile);
+        log(`Undo: Restored ${outputFile} from ${lastBackup}`);
+        vscode.window.showInformationMessage('Your paste file has been restored from the most recent backup.');
+        if (config.openAfterSave) {
+          const doc = await vscode.workspace.openTextDocument(outputFile);
+          vscode.window.showTextDocument(doc, { preview: false });
+        }
+      } catch (cpErr) {
+        vscode.window.showErrorMessage('Combine with Context: Failed to restore paste file from backup.');
+        log(cpErr);
+      }
     }
   } catch (err) {
-    vscode.window.showErrorMessage('Copy with Context: Unexpected error in undo.');
+    vscode.window.showErrorMessage('Combine with Context: Unexpected error in undo.');
     log(err);
   }
 }
@@ -464,7 +563,7 @@ async function handleUndoLastSave() {
 async function handleCopyToClipboard(uri: vscode.Uri, uris?: vscode.Uri[]) {
   try {
     if (!vscode.workspace.workspaceFolders?.length) {
-      vscode.window.showWarningMessage('Copy with Context: Please open a folder in VS Code to use this extension.');
+      vscode.window.showWarningMessage('Combine with Context: Please open a folder in VS Code to use this extension.');
       return;
     }
     const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
@@ -488,7 +587,7 @@ async function handleCopyToClipboard(uri: vscode.Uri, uris?: vscode.Uri[]) {
         try {
           collected = await collectFiles(selection, workspaceRoot, config, gitIgnoreFilter, progress);
         } catch (err) {
-          vscode.window.showErrorMessage('Copy with Context: Failed to collect files.');
+          vscode.window.showErrorMessage('Combine with Context: Failed to collect files.');
           log(err);
           return;
         }
@@ -503,13 +602,13 @@ async function handleCopyToClipboard(uri: vscode.Uri, uris?: vscode.Uri[]) {
           vscode.window.showInformationMessage('Context copied to clipboard!');
           log('Context copied to clipboard.');
         } catch (clipErr) {
-          vscode.window.showErrorMessage(`Copy with Context: Failed to copy to clipboard.`);
+          vscode.window.showErrorMessage(`Combine with Context: Failed to copy to clipboard.`);
           log(clipErr);
         }
       }
     );
   } catch (err) {
-    vscode.window.showErrorMessage('Copy with Context: Unexpected error during clipboard operation.');
+    vscode.window.showErrorMessage('Combine with Context: Unexpected error during clipboard operation.');
     log(err);
   }
 }

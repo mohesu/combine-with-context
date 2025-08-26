@@ -2,7 +2,7 @@
   "name": "combine-with-context",
   "displayName": "Combine with Context",
   "description": "Export project code context in clean Markdown for LLMs. Maps languages, filters files, supports .gitignore and history.",
-  "version": "2.3.3",
+  "version": "2.4.0",
   "publisher": "mohesu",
   "icon": "icon.png",
   "engines": {
@@ -14,9 +14,8 @@
   "activationEvents": [
     "onCommand:copyWithContext.copyToClipboard",
     "onCommand:copyWithContext.saveAsZip",
-    "onCommand:copyWithContext.updateZipFile",
     "onCommand:copyWithContext.saveToPasteFile",
-    "onCommand:copyWithContext.updatePasteFile",
+    "onCommand:copyWithContext.updateLast",
     "onCommand:copyWithContext.undoLastSave",
     "onCommand:copyWithContext.showLog"
   ],
@@ -29,34 +28,35 @@
         "category": "Combine with Context"
       },
       {
-        "command": "copyWithContext.saveAsZip",
-        "title": "CC: Save selection as ZIP",
-        "category": "Combine with Context"
-      },
-      {
-        "command": "copyWithContext.updateZipFile",
-        "title": "CC: Update zip file",
-        "category": "Combine with Context"
-      },
-      {
         "command": "copyWithContext.saveToPasteFile",
         "title": "CC: Save to paste file",
         "category": "Combine with Context"
       },
       {
-        "command": "copyWithContext.updatePasteFile",
-        "title": "CC: Update paste file",
+        "command": "copyWithContext.saveAsZip",
+        "title": "CC: Save selection as ZIP",
+        "category": "Combine with Context"
+      },
+      {
+        "command": "copyWithContext.updateLast",
+        "title": "CC: Update last output",
         "category": "Combine with Context"
       },
       {
         "command": "copyWithContext.undoLastSave",
-        "title": "CC: Undo last paste file Save",
+        "title": "CC: Undo last save",
         "category": "Combine with Context"
       },
       {
         "command": "copyWithContext.showLog",
         "title": "CC: Show Log",
         "category": "Combine with Context"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "copyWithContext.saveAs",
+        "label": "Save As"
       }
     ],
     "menus": {
@@ -66,24 +66,26 @@
           "group": "9_cutcopypaste@3"
         },
         {
-          "command": "copyWithContext.saveAsZip",
+          "submenu": "copyWithContext.saveAs",
           "group": "9_cutcopypaste@4"
         },
         {
-          "command": "copyWithContext.updateZipFile",
+          "command": "copyWithContext.updateLast",
           "group": "9_cutcopypaste@5"
         },
         {
-          "command": "copyWithContext.saveToPasteFile",
-          "group": "9_cutcopypaste@6"
-        },
-        {
-          "command": "copyWithContext.updatePasteFile",
-          "group": "9_cutcopypaste@7"
-        },
-        {
           "command": "copyWithContext.undoLastSave",
-          "group": "9_cutcopypaste@8"
+          "group": "9_cutcopypaste@6"
+        }
+      ],
+      "copyWithContext.saveAs": [
+        {
+          "command": "copyWithContext.saveToPasteFile",
+          "group": "1"
+        },
+        {
+          "command": "copyWithContext.saveAsZip",
+          "group": "2"
         }
       ]
     },
@@ -111,7 +113,7 @@
     ],
     "configuration": {
       "type": "object",
-      "title": "Copy with Context configuration",
+      "title": "Combine with Context configuration",
       "properties": {
         "copyWithContext.zipFileName": {
           "type": "string",

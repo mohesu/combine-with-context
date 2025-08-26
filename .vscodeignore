@@ -27,6 +27,7 @@ demo.txt
 copywithcontext*.vsix
 public/gifs/
 .DS_Store
-paste.txt
-.llmcontexthistory/
-.llmcontext/
+paste.md
+context.zip
+.llm-context-history/
+.llm-context/

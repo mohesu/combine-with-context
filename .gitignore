@@ -11,3 +11,5 @@ npm-debug.log
 *.tsbuildinfo
 dist/
 package-lock.json
+*.zip
+paste.md

@@ -10,7 +10,7 @@
 
 ## Test
 - Open in VS Code: Press F5 for debug.
-- Commands: copyWithContext.saveToPasteFile, copyWithContext.copyToClipboard, copyWithContext.undoLastSave.
+- Commands: `copyWithContext.saveToPasteFile`, `copyWithContext.saveAsZip`, `copyWithContext.copyToClipboard`, `copyWithContext.updateLast`, `copyWithContext.undoLastSave`, `copyWithContext.showLog`.
 
 ## Config
 - Edit `settings.ts` for defaults.
@@ -26,28 +26,4 @@
 
 # README.md
 
-# Copy with Context
-
-VS Code extension to aggregate files into formatted text for LLM context.
-
-## Features
-- Collect files, respect .gitignore.
-- Output to paste.md or clipboard.
-- Include file tree, analysis.
-- Configurable: timestamps, compression, symlinks.
-
-## Install
-From VS Code Marketplace.
-
-## Usage
-- Select files/folders.
-- Run "Copy with Context: Save to Paste.md" or "Copy to Clipboard".
-- Undo last save.
-
-## Config
-- `copyWithContext.outputFileName`: 'paste.md'.
-- `copyWithContext.useGitignore`: true.
-- `copyWithContext.compressContent`: false.
-
-## License
-MIT.
+Refer to the top-level `README.md` for detailed documentation.  This extension is now called **Combine with Context** and supports both saving to Markdown or ZIP as well as updating and undoing your last output.  See the main README for features, usage, configuration and license information.

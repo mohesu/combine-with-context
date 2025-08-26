@@ -7,7 +7,7 @@ export function getConfig() {
     outputFileName: config.get<string>('outputFileName', 'paste.md')!,
     appendMode: config.get<boolean>('appendMode', false),
     includeTimestamp: config.get<boolean>('includeTimestamp', true),
-    filteredExtensions: config.get<string[]>('filteredExtensions', [".png", ".jpg", ".jpeg", ".gif", ".exe", ".dll", ".ico", ".svg"]),
+    filteredExtensions: config.get<string[]>('filteredExtensions', [".png", ".jpg", ".jpeg", ".gif", ".exe", ".dll", ".ico", ".svg", ".webp", ".bmp", ".tiff", ".zip", ".tar"]),
     maxFileSize: config.get<number>('maxFileSize', 5242880),
     outputSubfolder: config.get<string>('outputSubfolder', ''),
     openAfterSave: config.get<boolean>('openAfterSave', true),

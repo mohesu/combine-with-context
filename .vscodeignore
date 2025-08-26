@@ -25,6 +25,7 @@ developer_readme.md
 project-spec.md
 demo.txt
 copywithcontext*.vsix
+combinewithcontext*.vsix
 public/gifs/
 .DS_Store
 paste.md

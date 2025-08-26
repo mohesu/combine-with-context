@@ -2,7 +2,7 @@
   "name": "combine-with-context",
   "displayName": "Combine with Context",
   "description": "Export project code context in clean Markdown for LLMs. Maps languages, filters files, supports .gitignore and history.",
-  "version": "2.4.2",
+  "version": "2.5.0",
   "publisher": "mohesu",
   "icon": "icon.png",
   "engines": {
@@ -24,106 +24,106 @@
     "combine with context"
   ],
   "activationEvents": [
-    "onCommand:copyWithContext.copyToClipboard",
-    "onCommand:copyWithContext.saveAsZip",
-    "onCommand:copyWithContext.saveToPasteFile",
-    "onCommand:copyWithContext.updateLast",
-    "onCommand:copyWithContext.undoLastSave",
-    "onCommand:copyWithContext.showLog"
+    "onCommand:combineWithContext.copyToClipboard",
+    "onCommand:combineWithContext.saveAsZip",
+    "onCommand:combineWithContext.saveToPasteFile",
+    "onCommand:combineWithContext.updateLast",
+    "onCommand:combineWithContext.undoLastSave",
+    "onCommand:combineWithContext.showLog"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "copyWithContext.copyToClipboard",
+        "command": "combineWithContext.copyToClipboard",
         "title": "CC: Copy to Clipboard",
         "category": "Combine with Context"
       },
       {
-        "command": "copyWithContext.saveToPasteFile",
+        "command": "combineWithContext.saveToPasteFile",
         "title": "CC: Save to paste file",
         "category": "Combine with Context"
       },
       {
-        "command": "copyWithContext.saveAsZip",
+        "command": "combineWithContext.saveAsZip",
         "title": "CC: Save selection as ZIP",
         "category": "Combine with Context"
       },
       {
-        "command": "copyWithContext.updateLast",
+        "command": "combineWithContext.updateLast",
         "title": "CC: Update last output",
         "category": "Combine with Context"
       },
       {
-        "command": "copyWithContext.undoLastSave",
+        "command": "combineWithContext.undoLastSave",
         "title": "CC: Undo last save",
         "category": "Combine with Context"
       },
       {
-        "command": "copyWithContext.showLog",
+        "command": "combineWithContext.showLog",
         "title": "CC: Show Log",
         "category": "Combine with Context"
       }
     ],
     "submenus": [
       {
-        "id": "copyWithContext.saveAs",
+        "id": "combineWithContext.saveAs",
         "label": "CC: Save As"
       }
     ],
     "menus": {
       "explorer/context": [
         {
-          "command": "copyWithContext.copyToClipboard",
+          "command": "combineWithContext.copyToClipboard",
           "group": "9_cutcopypaste@3"
         },
         {
-          "submenu": "copyWithContext.saveAs",
+          "submenu": "combineWithContext.saveAs",
           "group": "9_cutcopypaste@4"
         },
         {
-          "command": "copyWithContext.updateLast",
+          "command": "combineWithContext.updateLast",
           "group": "9_cutcopypaste@5"
         },
         {
-          "command": "copyWithContext.undoLastSave",
+          "command": "combineWithContext.undoLastSave",
           "group": "9_cutcopypaste@6"
         }
       ],
-      "copyWithContext.saveAs": [
+      "combineWithContext.saveAs": [
         {
-          "command": "copyWithContext.saveToPasteFile",
+          "command": "combineWithContext.saveToPasteFile",
           "group": "1"
         },
         {
-          "command": "copyWithContext.saveAsZip",
+          "command": "combineWithContext.saveAsZip",
           "group": "2"
         }
       ]
     },
     "keybindings": [
       {
-        "command": "copyWithContext.copyToClipboard",
+        "command": "combineWithContext.copyToClipboard",
         "key": "ctrl+alt+shift+c",
         "when": "explorerViewletFocus"
       },
       {
-        "command": "copyWithContext.saveAsZip",
+        "command": "combineWithContext.saveAsZip",
         "key": "ctrl+alt+shift+o",
         "when": "explorerViewletFocus"
       },
       {
-        "command": "copyWithContext.updateLast",
-        "key": "ctrl+alt+shift+u",
-        "when": "explorerViewletFocus"
-      },
-      {
-        "command": "copyWithContext.saveToPasteFile",
+        "command": "combineWithContext.saveToPasteFile",
         "key": "ctrl+alt+shift+p",
         "when": "explorerViewletFocus"
       },
       {
-        "command": "copyWithContext.undoLastSave",
+        "command": "combineWithContext.updateLast",
+        "key": "ctrl+alt+shift+u",
+        "when": "explorerViewletFocus"
+      },
+      {
+        "command": "combineWithContext.undoLastSave",
         "key": "ctrl+alt+shift+z",
         "when": "explorerViewletFocus"
       }
@@ -132,27 +132,27 @@
       "type": "object",
       "title": "Combine with Context configuration",
       "properties": {
-        "copyWithContext.zipFileName": {
+        "combineWithContext.zipFileName": {
           "type": "string",
           "default": "context.zip",
           "description": "Name or relative path for the ZIP archive of selected files (placed under outputSubfolder if set)."
         },
-        "copyWithContext.outputFileName": {
+        "combineWithContext.outputFileName": {
           "type": "string",
           "default": "paste.md",
           "description": "Name or relative path of the output file."
         },
-        "copyWithContext.appendMode": {
+        "combineWithContext.appendMode": {
           "type": "boolean",
           "default": false,
           "description": "Append to existing file instead of overwriting."
         },
-        "copyWithContext.includeTimestamp": {
+        "combineWithContext.includeTimestamp": {
           "type": "boolean",
           "default": true,
           "description": "Include timestamp on each file block."
         },
-        "copyWithContext.filteredExtensions": {
+        "combineWithContext.filteredExtensions": {
           "type": "array",
           "items": {
             "type": "string"
@@ -164,41 +164,47 @@
             ".gif",
             ".exe",
             ".dll",
-            ".ico"
+            ".ico",
+            ".svg",
+            ".webp",
+            ".bmp",
+            ".tiff",
+            ".zip",
+            ".tar"
           ],
           "description": "File extensions to exclude (text-only is recommended for LLMs)."
         },
-        "copyWithContext.maxFileSize": {
+        "combineWithContext.maxFileSize": {
           "type": "number",
           "default": 5242880,
           "description": "Maximum size (bytes) for included files."
         },
-        "copyWithContext.outputSubfolder": {
+        "combineWithContext.outputSubfolder": {
           "type": "string",
           "default": "",
           "description": "Output subfolder in the workspace."
         },
-        "copyWithContext.openAfterSave": {
+        "combineWithContext.openAfterSave": {
           "type": "boolean",
           "default": true,
           "description": "Open output file in the editor after saving."
         },
-        "copyWithContext.separator": {
+        "combineWithContext.separator": {
           "type": "string",
-          "default": "\n\n",
+          "default": "\n---\n",
           "description": "Separator string between files in output."
         },
-        "copyWithContext.useGitignore": {
+        "combineWithContext.useGitignore": {
           "type": "boolean",
           "default": true,
           "description": "Respect .gitignore rules."
         },
-        "copyWithContext.historyFolder": {
+        "combineWithContext.historyFolder": {
           "type": "string",
           "default": ".llm-context-history",
           "description": "Subfolder for automatic backups."
         },
-        "copyWithContext.markdownMapping": {
+        "combineWithContext.markdownMapping": {
           "type": "object",
           "default": {
             ".md": {
@@ -231,17 +237,17 @@
           },
           "description": "Map file extension to markdown code block language."
         },
-        "copyWithContext.includeFileTree": {
+        "combineWithContext.includeFileTree": {
           "type": "boolean",
           "default": true,
           "description": "Include a file tree at the top of the output."
         },
-        "copyWithContext.includeFileAnalysis": {
+        "combineWithContext.includeFileAnalysis": {
           "type": "boolean",
           "default": true,
           "description": "Include a file type/count analysis summary."
         },
-        "copyWithContext.symlinkHandling": {
+        "combineWithContext.symlinkHandling": {
           "type": "string",
           "enum": [
             "skip",
@@ -250,7 +256,7 @@
           "default": "skip",
           "description": "How to handle symlinks: 'skip' to ignore, 'resolve' to follow."
         },
-        "copyWithContext.compressContent": {
+        "combineWithContext.compressContent": {
           "type": "boolean",
           "default": false,
           "description": "Remove whitespace/comments for selected languages before saving."

@@ -10,7 +10,7 @@
 
 ## Test
 - Open in VS Code: Press F5 for debug.
-- Commands: `copyWithContext.saveToPasteFile`, `copyWithContext.saveAsZip`, `copyWithContext.copyToClipboard`, `copyWithContext.updateLast`, `copyWithContext.undoLastSave`, `copyWithContext.showLog`.
+- Commands: `combineWithContext.saveToPasteFile`, `combineWithContext.saveAsZip`, `combineWithContext.copyToClipboard`, `combineWithContext.updateLast`, `combineWithContext.undoLastSave`, `combineWithContext.showLog`.
 
 ## Config
 - Edit `settings.ts` for defaults.

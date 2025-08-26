@@ -87,7 +87,8 @@ async function collectFiles(
   workspaceRoot: string,
   config: ReturnType<typeof getConfig>,
   gitIgnoreFilter: ReturnType<typeof ignore> | null,
-  progress?: vscode.Progress<{ message?: string }>
+  progress?: vscode.Progress<{ message?: string }>,
+  explicitRoots: string[] = []
 ): Promise<{files: vscode.Uri[], relPaths: string[], extCounts: Map<string, number>}> {
   const toProcess: vscode.Uri[] = [...uris];
   const files: vscode.Uri[] = [];
@@ -115,7 +116,29 @@ async function collectFiles(
           relPath = path.relative(workspaceRoot, currentUri.fsPath).replace(/\\/g, '/');
         }
       }
-      if (gitIgnoreFilter && relPath && gitIgnoreFilter.ignores(relPath)) {continue;}
+      if (gitIgnoreFilter && relPath && gitIgnoreFilter.ignores(relPath)) {
+        // Only skip if the path is not explicitly selected (or within an explicitly selected folder)
+        // and does not refer to a recognized file extension.  If a user selects a file or folder
+        // explicitly, we override the ignore rule.  Additionally, if the file's extension
+        // corresponds to a known language in MarkdownMapping, we include it as well.
+        let override = false;
+        // Check if this path or its parent matches any explicit selection
+        for (const root of explicitRoots) {
+          if (relPath === root || relPath.startsWith(root + '/')) {
+            override = true;
+            break;
+          }
+        }
+        if (!override && fileStat.type === vscode.FileType.File) {
+          const langForIgnored = getMarkdownLangForFile(relPath);
+          if (langForIgnored) {
+            override = true;
+          }
+        }
+        if (!override) {
+          continue;
+        }
+      }
       if (fileStat.type === vscode.FileType.File) {
         if (config.filteredExtensions.some(ext => currentUri.fsPath.endsWith(ext))) {continue;}
         if (fileStat.size > config.maxFileSize) {continue;}
@@ -191,16 +214,16 @@ async function getFormattedContext(
 
 export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
-    vscode.commands.registerCommand('copyWithContext.copyToClipboard', handleCopyToClipboard),
-    vscode.commands.registerCommand('copyWithContext.saveAsZip', handleSaveAsZip),
-    vscode.commands.registerCommand('copyWithContext.saveToPasteFile', handleSaveToPasteFile),
-    vscode.commands.registerCommand('copyWithContext.undoLastSave', handleUndoLastSave),
+    vscode.commands.registerCommand('combineWithContext.copyToClipboard', handleCopyToClipboard),
+    vscode.commands.registerCommand('combineWithContext.saveAsZip', handleSaveAsZip),
+    vscode.commands.registerCommand('combineWithContext.saveToPasteFile', handleSaveToPasteFile),
+    vscode.commands.registerCommand('combineWithContext.undoLastSave', handleUndoLastSave),
     // Unified update command: determines whether to regenerate the paste file or
     // ZIP archive based on whichever action was performed last.  This
     // supersedes the older update commands which were tied to a specific
     // output format.
-    vscode.commands.registerCommand('copyWithContext.updateLast', handleUpdateLast),
-    vscode.commands.registerCommand('copyWithContext.showLog', () => outputChannel?.show(true))
+    vscode.commands.registerCommand('combineWithContext.updateLast', handleUpdateLast),
+    vscode.commands.registerCommand('combineWithContext.showLog', () => outputChannel?.show(true))
   );
 }
 
@@ -263,7 +286,8 @@ async function handleSaveAsZip(uri: vscode.Uri, uris?: vscode.Uri[]) {
       async (progress) => {
         let collected: { files: vscode.Uri[]; relPaths: string[]; extCounts: Map<string, number> };
         try {
-          collected = await collectFiles(selection, workspaceRoot, config, gitIgnoreFilter, progress);
+          const explicitRoots = selection.map((u) => path.relative(workspaceRoot, u.fsPath).replace(/\\/g, '/'));
+          collected = await collectFiles(selection, workspaceRoot, config, gitIgnoreFilter, progress, explicitRoots);
         } catch (err) {
           vscode.window.showErrorMessage('Combine with Context: Failed to collect files.');
           log(err);
@@ -395,7 +419,8 @@ async function handleSaveToPasteFile(uri: vscode.Uri, uris?: vscode.Uri[]) {
       async (progress) => {
         let collected: {files: vscode.Uri[], relPaths: string[], extCounts: Map<string, number>};
         try {
-          collected = await collectFiles(selection, workspaceRoot, config, gitIgnoreFilter, progress);
+          const explicitRoots = selection.map((u) => path.relative(workspaceRoot, u.fsPath).replace(/\\/g, '/'));
+          collected = await collectFiles(selection, workspaceRoot, config, gitIgnoreFilter, progress, explicitRoots);
         } catch (err) {
           vscode.window.showErrorMessage(`Combine with Context: Failed to collect files.`);
           log(err);
@@ -585,7 +610,8 @@ async function handleCopyToClipboard(uri: vscode.Uri, uris?: vscode.Uri[]) {
       async (progress) => {
         let collected: {files: vscode.Uri[], relPaths: string[], extCounts: Map<string, number>};
         try {
-          collected = await collectFiles(selection, workspaceRoot, config, gitIgnoreFilter, progress);
+          const explicitRoots = selection.map((u) => path.relative(workspaceRoot, u.fsPath).replace(/\\/g, '/'));
+          collected = await collectFiles(selection, workspaceRoot, config, gitIgnoreFilter, progress, explicitRoots);
         } catch (err) {
           vscode.window.showErrorMessage('Combine with Context: Failed to collect files.');
           log(err);

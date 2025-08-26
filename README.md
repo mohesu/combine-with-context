@@ -28,9 +28,10 @@
 - Designed for reliability, traceability, and ease of use in production environments.
 
 - **Multi-select**: Select any files and/or folders in VS Code Explorer.
-- **Re-save/Update last output**: Once you've created a paste file or ZIP archive, you can regenerate it later using the same selection without reselection files.
+- **Re-save/Update last output**: Once you've created a paste file or ZIP archive, you can regenerate it later using the same selection without reselecting files.  A single **Update last output** command determines which format to rebuild based on your most recent save.
 - **LLM-friendly Markdown**: Each file block is clearly marked (with path, code block, timestamp); optional file tree and type-wise analysis.
 - **Smart filtering**: Excludes binary files, images, large/empty files, and recognizes `.gitignore`.
+  If you explicitly select a file or folder, it will be processed even if its parent directory is ignored by `.gitignore`.  Recognized file types (via the Markdown mapping) are always included.
 - **Content compression**: Minifies code (trim whitespace, remove comments for JS/TS, Python, CSS) when enabled.
 - **Symlink handling**: Configurable to skip or resolve symlinks.
 - **User configuration**: Change output file, folder, append/overwrite, excludes, separators, etc., via settings.
@@ -48,11 +49,11 @@
 <summary><h2>🛠 Usage</h2></summary>
 
 1. **Select files/folders** in the VS Code Explorer.
-2. **Right‑click** and choose **Save As → Save to paste file** or **Save As → Save selection as ZIP**.
+2. **Right‑click** and choose **Save As → Save to paste file** or **Save As → Save selection as ZIP**.  The selected files will be aggregated and saved to your configured Markdown (`paste.md` by default) or ZIP (`context.zip` by default) file.
 3. The output will appear in the designated file (or your chosen name/folder).
-4. **Undo**: Use the **CC: Undo last save** command to restore the most recent backup.
+4. **Undo**: Use the **CC: Undo last save** command to restore the most recent backup of your paste or ZIP file.
 5. **Clipboard**: Use the **CC: Copy to Clipboard** command/menu to copy the formatted context directly.
-6. **Update**: After you've saved once, regenerate with **CC: Update last output**.
+6. **Update**: After you've saved a paste or ZIP once, you can regenerate the output with the latest contents of the same files/folders. Right‑click and choose **CC: Update last output**; the extension will determine which format to regenerate based on your most recent save.
 
 </details>
 
@@ -72,7 +73,7 @@ Set these in your workspace or global settings:
 | maxFileSize         | 5242880 (5MB)          | Per-file max size                      |
 | outputSubfolder     | "" (root)              | Subfolder for output (optional)        |
 | openAfterSave       | true                   | Open file after writing                |
-| separator           | "\n\n"                 | Markdown separator between file blocks |
+| separator           | "\n---\n"              | Markdown separator between file blocks |
 | useGitignore        | true                   | Use `.gitignore` for filtering         |
 | historyFolder       | `.llm-context-history` | History folder for backups             |
 | includeFileTree     | true                   | Include file tree in output            |
@@ -87,10 +88,11 @@ Set these in your workspace or global settings:
 <details open>
 <summary><h2>⌨️ Keybindings</h2></summary>
 
-- Save to paste.md: `Ctrl+Alt+Shift+S`
 - Copy to clipboard: `Ctrl+Alt+Shift+C`
-- Save to context.zip: `Ctrl+Alt+Shift+Z`
-- Undo last save: `Ctrl+Alt+Shift+U`
+- Save to paste.md: `Ctrl+Alt+Shift+P`
+- Save to context.zip: `Ctrl+Alt+Shift+O`
+- Undo last save: `Ctrl+Alt+Shift+Z`
+- Update/Resave Output: `Ctrl+Alt+Shift+U`
 
 </details>
 

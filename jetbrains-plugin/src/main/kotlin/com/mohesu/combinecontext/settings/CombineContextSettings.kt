@@ -8,7 +8,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
     name = "CombineContextSettings",
     storages = [Storage("CombineContextSettings.xml")]
 )
-@Service(Service.Level.APPLICATION)
+@Service(Service.Level.APP)
 class CombineContextSettings : PersistentStateComponent<CombineContextSettings> {
 
     var zipFileName: String = "context.zip"
@@ -16,7 +16,7 @@ class CombineContextSettings : PersistentStateComponent<CombineContextSettings> 
     var appendMode: Boolean = false
     var includeTimestamp: Boolean = true
     var filteredExtensions: MutableList<String> = mutableListOf(".png", ".jpg", ".jpeg", ".gif", ".exe", ".dll", ".ico", ".svg", ".webp", ".bmp", ".tiff", ".zip", ".tar")
-    var maxFileSize: Long = 5242880L // 5MB
+    var maxFileSize: Long = 5242880L
     var outputSubfolder: String = ""
     var openAfterSave: Boolean = true
     var separator: String = "\n---\n"
@@ -24,10 +24,9 @@ class CombineContextSettings : PersistentStateComponent<CombineContextSettings> 
     var historyFolder: String = ".llm-context-history"
     var includeFileTree: Boolean = true
     var includeFileAnalysis: Boolean = true
-    var symlinkHandling: String = "skip" // 'skip' | 'resolve'
+    var symlinkHandling: String = "skip"
     var compressContent: Boolean = false
-    
-    // Markdown language mappings (extension -> language) - updated to match VS Code defaults
+
     var markdownMapping: MutableMap<String, String> = mutableMapOf(
         ".md" to "markdown",
         ".js" to "javascript",
@@ -60,8 +59,7 @@ class CombineContextSettings : PersistentStateComponent<CombineContextSettings> 
     }
 
     companion object {
-        fun getInstance(): CombineContextSettings {
-            return ApplicationManager.getApplication().getService(CombineContextSettings::class.java)
-        }
+        fun getInstance(): CombineContextSettings =
+            ApplicationManager.getApplication().getService(CombineContextSettings::class.java)
     }
 }

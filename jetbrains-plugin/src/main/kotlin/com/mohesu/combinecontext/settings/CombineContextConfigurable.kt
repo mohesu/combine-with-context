@@ -8,14 +8,13 @@ import javax.swing.JComponent
 class CombineContextConfigurable : Configurable {
     private var component: DialogPanel? = null
     private val settings = CombineContextSettings.getInstance()
-    
-    // Temporary variables to hold form values
+
     private var zipFileName = settings.zipFileName
     private var outputFileName = settings.outputFileName
     private var appendMode = settings.appendMode
     private var includeTimestamp = settings.includeTimestamp
     private var filteredExtensions = settings.filteredExtensions.joinToString(", ")
-    private var maxFileSize = (settings.maxFileSize / 1024 / 1024).toInt() // Convert to MB
+    private var maxFileSize = (settings.maxFileSize / 1024 / 1024).toInt()
     private var outputSubfolder = settings.outputSubfolder
     private var openAfterSave = settings.openAfterSave
     private var separator = settings.separator
@@ -23,7 +22,8 @@ class CombineContextConfigurable : Configurable {
     private var historyFolder = settings.historyFolder
     private var includeFileTree = settings.includeFileTree
     private var includeFileAnalysis = settings.includeFileAnalysis
-    private var symlinkHandling = settings.symlinkHandling
+    // Made nullable to satisfy bindItem (expects KMutableProperty0<T?>)
+    private var symlinkHandling: String? = settings.symlinkHandling
     private var compressContent = settings.compressContent
 
     override fun getDisplayName(): String = "Combine with Context"
@@ -62,7 +62,7 @@ class CombineContextConfigurable : Configurable {
                         .comment("Automatically open the output file in editor")
                 }
             }
-            
+
             group("Content Settings") {
                 row {
                     checkBox("Include timestamp")
@@ -90,7 +90,7 @@ class CombineContextConfigurable : Configurable {
                         .comment("Separator string between files in output")
                 }
             }
-            
+
             group("Filtering Settings") {
                 row("Filtered extensions:") {
                     textField()
@@ -141,7 +141,7 @@ class CombineContextConfigurable : Configurable {
         settings.appendMode = appendMode
         settings.includeTimestamp = includeTimestamp
         settings.filteredExtensions = filteredExtensions.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
-        settings.maxFileSize = maxFileSize * 1024L * 1024L // Convert MB to bytes
+        settings.maxFileSize = maxFileSize * 1024L * 1024L
         settings.outputSubfolder = outputSubfolder
         settings.openAfterSave = openAfterSave
         settings.separator = separator
@@ -149,7 +149,7 @@ class CombineContextConfigurable : Configurable {
         settings.historyFolder = historyFolder
         settings.includeFileTree = includeFileTree
         settings.includeFileAnalysis = includeFileAnalysis
-        settings.symlinkHandling = symlinkHandling
+        settings.symlinkHandling = (symlinkHandling ?: "skip")
         settings.compressContent = compressContent
     }
 

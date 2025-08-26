@@ -56,7 +56,7 @@
     "submenus": [
       {
         "id": "copyWithContext.saveAs",
-        "label": "Save As"
+        "label": "CC: Save As"
       }
     ],
     "menus": {
@@ -97,17 +97,22 @@
       },
       {
         "command": "copyWithContext.saveAsZip",
-        "key": "ctrl+alt+shift+z",
+        "key": "ctrl+alt+shift+o",
+        "when": "explorerViewletFocus"
+      },
+      {
+        "command": "copyWithContext.updateLast",
+        "key": "ctrl+alt+shift+u",
         "when": "explorerViewletFocus"
       },
       {
         "command": "copyWithContext.saveToPasteFile",
-        "key": "ctrl+alt+shift+s",
+        "key": "ctrl+alt+shift+p",
         "when": "explorerViewletFocus"
       },
       {
         "command": "copyWithContext.undoLastSave",
-        "key": "ctrl+alt+shift+u",
+        "key": "ctrl+alt+shift+z",
         "when": "explorerViewletFocus"
       }
     ],

@@ -1,6 +1,6 @@
-Hello, i am a senior software engineer with an idea for an app, and you are a senior software engineer who will help me build an application. The app is a vscode extension. I have alreayd initialized the project using code yo and eslint as a builder.
+Hello, i am a senior software engineer with an idea for an app, and you are a senior software engineer who will help me build an application. The app is a vscode extension. I have already initialized the project using code yo and eslint as a builder.
 
-Below is a Project Specification for the vscode extension "Context Copy" . You will read and undertand the project specification. Outline the file structure we need using DRY coding principles. and implement every file and piece of code. your output should be the directory structure with filenames, and every code file clearly marked with filenames. we are using typescript.
+Below is a Project Specification for the vscode extension "Context Copy" . You will read and understand the project specification. Outline the file structure we need using DRY coding principles. and implement every file and piece of code. your output should be the directory structure with filenames, and every code file clearly marked with filenames. we are using typescript.
 
 
 Project Specification for software development of the vscode extension "Context Copy" 
@@ -10,7 +10,7 @@ Project Specification for software development of the vscode extension "Context 
 ## Project Specification (Revised)
 
 ### user goals 
-Users want to be able to easily copy one or many files at once onto their cliboard. The text saved onto the cliboard will be in a format that will be easily understood by llms.
+Users want to be able to easily copy one or many files at once onto their clipboard. The text saved onto the clipboard will be in a format that will be easily understood by LLMs.
 
 ### 1. **Project Overview**
 

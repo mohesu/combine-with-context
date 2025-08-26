@@ -2,14 +2,26 @@
   "name": "combine-with-context",
   "displayName": "Combine with Context",
   "description": "Export project code context in clean Markdown for LLMs. Maps languages, filters files, supports .gitignore and history.",
-  "version": "2.4.1",
+  "version": "2.4.2",
   "publisher": "mohesu",
   "icon": "icon.png",
   "engines": {
     "vscode": "^1.99.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Snippets"
+  ],
+  "keywords": [
+    "copy with context",
+    "keybindings",
+    "LLM context",
+    "code context",
+    "code as markdown",
+    "copy for ai",
+    "chatgpt",
+    "tree view",
+    "combine with context"
   ],
   "activationEvents": [
     "onCommand:copyWithContext.copyToClipboard",

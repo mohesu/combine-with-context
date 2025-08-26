@@ -4,6 +4,7 @@ paste.txt
 out/
 node_modules/
 .vscode/
+.idea/
 *.vsix
 .DS_Store
 npm-debug.log

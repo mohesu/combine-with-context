@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 export function getConfig() {
-  const config = vscode.workspace.getConfiguration('copyWithContext');
+  const config = vscode.workspace.getConfiguration('combineWithContext');
   return {
     zipFileName: config.get<string>('zipFileName', 'context.zip')!,
     outputFileName: config.get<string>('outputFileName', 'paste.md')!,

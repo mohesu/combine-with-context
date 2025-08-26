@@ -15,7 +15,7 @@ class CombineContextSettings : PersistentStateComponent<CombineContextSettings> 
     var outputFileName: String = "paste.md"
     var appendMode: Boolean = false
     var includeTimestamp: Boolean = true
-    var filteredExtensions: MutableList<String> = mutableListOf(".png", ".jpg", ".jpeg", ".gif", ".exe", ".dll", ".ico", ".svg")
+    var filteredExtensions: MutableList<String> = mutableListOf(".png", ".jpg", ".jpeg", ".gif", ".exe", ".dll", ".ico", ".svg", ".webp", ".bmp", ".tiff", ".zip", ".tar")
     var maxFileSize: Long = 5242880L // 5MB
     var outputSubfolder: String = ""
     var openAfterSave: Boolean = true
@@ -27,7 +27,7 @@ class CombineContextSettings : PersistentStateComponent<CombineContextSettings> 
     var symlinkHandling: String = "skip" // 'skip' | 'resolve'
     var compressContent: Boolean = false
     
-    // Markdown language mappings (extension -> language)
+    // Markdown language mappings (extension -> language) - updated to match VS Code defaults
     var markdownMapping: MutableMap<String, String> = mutableMapOf(
         ".md" to "markdown",
         ".js" to "javascript",
@@ -38,6 +38,7 @@ class CombineContextSettings : PersistentStateComponent<CombineContextSettings> 
         ".sh" to "bash",
         ".yml" to "yaml",
         ".yaml" to "yaml",
+        ".dart" to "dart",
         ".java" to "java",
         ".kt" to "kotlin",
         ".xml" to "xml",

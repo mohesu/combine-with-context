@@ -13,6 +13,10 @@ This is the JetBrains IDE plugin version of Combine with Context, providing the 
 - **Content compression**: Optional minification and comment removal
 - **History and undo**: Backup and restore functionality
 - **Configurable**: Extensive customization options
+- **🆕 Visual Icons**: Actions now have intuitive icons for better recognition
+- **🆕 Smart Confirmation**: Automatic confirmation dialogs for large operations (>10 files)
+- **🆕 Enhanced File Detection**: Improved file processability checks for better performance
+- **🆕 Context-Aware UI**: Action text updates dynamically based on your current selection
 
 ## Installation
 
@@ -48,16 +52,22 @@ The plugin provides multiple ways to access its functionality for maximum conven
 2. Choose from the "Combine with Context" submenu
 
 ### Available Actions
-- **CC: Copy to Clipboard** - Copy formatted context to clipboard
-- **CC: Save to Paste File** - Save as markdown file  
-- **CC: Save as ZIP** - Create ZIP archive
-- **CC: Update Last Output** - Regenerate last action
-- **CC: Undo Last Save** - Restore from backup
+- **CC: Copy to Clipboard** 📋 - Copy formatted context to clipboard
+- **CC: Save to Paste File** 💾 - Save as markdown file  
+- **CC: Save as ZIP** 📦 - Create ZIP archive
+- **CC: Update Last Output** 🔄 - Regenerate last action
+- **CC: Undo Last Save** ↩️ - Restore from backup
 
 **Smart Context Detection**: Actions automatically work with:
 - Selected files/folders in Project View (when available)
 - Current file in active editor (fallback)
 - All open files in editor (last resort)
+
+**Intelligent Behavior**:
+- Actions are only enabled when files would actually be processable
+- Confirmation dialogs appear for large operations (>10 files) 
+- Dynamic action text updates based on your current selection
+- Performance optimized to avoid expensive operations during UI updates
 
 ## Keyboard Shortcuts
 

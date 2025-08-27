@@ -4,9 +4,9 @@
 
 **Now available for both VS Code and JetBrains IDEs!**
 
-![Open VSX Version](https://img.shields.io/open-vsx/v/mohesu/combine-with-context)
-![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/mohesu.combine-with-context)
-![JetBrains Plugin Version](https://img.shields.io/jetbrains/plugin/v/28309-combine-with-context)
+[![Open VSX Version](https://img.shields.io/open-vsx/v/mohesu/combine-with-context)](https://open-vsx.org/extension/mohesu/combine-with-context)
+[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/mohesu.combine-with-context)](https://marketplace.visualstudio.com/items?itemName=mohesu.combine-with-context)
+[![JetBrains Plugin Version](https://img.shields.io/jetbrains/plugin/v/28309-combine-with-context)](https://plugins.jetbrains.com/plugin/28309-combine-with-context)
 <!-- ![GitHub Repo stars](https://img.shields.io/github/stars/mohesu/combine-with-context) -->
 
 ---

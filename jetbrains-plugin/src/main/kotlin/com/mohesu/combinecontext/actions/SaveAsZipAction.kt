@@ -1,5 +1,6 @@
 package com.mohesu.combinecontext.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -71,6 +72,10 @@ class SaveAsZipAction : AnAction() {
         } catch (e: Exception) {
             // Backup failed, but continue with save
         }
+    }
+    
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.EDT
     }
     
     override fun update(e: AnActionEvent) {

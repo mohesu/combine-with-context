@@ -1,5 +1,6 @@
 package com.mohesu.combinecontext.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -48,6 +49,10 @@ class CopyToClipboardAction : AnAction() {
                 "Combine with Context Error"
             )
         }
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.EDT
     }
 
     override fun update(e: AnActionEvent) {

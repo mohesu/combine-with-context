@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.mohesu"
-version = "25.8.2701"
+version = "25.8.2702"
 
 repositories {
     mavenCentral()
@@ -35,7 +35,7 @@ tasks {
 
     patchPluginXml {
         sinceBuild.set("232")
-        untilBuild.set("243.*")
+        untilBuild.set(provider { null })
     }
 
     publishPlugin {

@@ -14,3 +14,8 @@ dist/
 package-lock.json
 *.zip
 paste.md
+
+# Analysis documents (temporary for this PR)
+JS_vs_Kotlin_IntelliJ_Plugin_Feasibility.md
+Code_Comparison_JS_vs_Kotlin.md
+FINAL_ASSESSMENT_JS_vs_Kotlin.md

@@ -37,32 +37,38 @@
       {
         "command": "combineWithContext.copyToClipboard",
         "title": "CC: Copy to Clipboard",
-        "category": "Combine with Context"
+        "category": "Combine with Context",
+        "icon": "$(copy)"
       },
       {
         "command": "combineWithContext.saveToPasteFile",
         "title": "CC: Save to paste file",
-        "category": "Combine with Context"
+        "category": "Combine with Context",
+        "icon": "$(save)"
       },
       {
         "command": "combineWithContext.saveAsZip",
         "title": "CC: Save selection as ZIP",
-        "category": "Combine with Context"
+        "category": "Combine with Context",
+        "icon": "$(file-zip)"
       },
       {
         "command": "combineWithContext.updateLast",
         "title": "CC: Update last output",
-        "category": "Combine with Context"
+        "category": "Combine with Context",
+        "icon": "$(sync)"
       },
       {
         "command": "combineWithContext.undoLastSave",
         "title": "CC: Undo last save",
-        "category": "Combine with Context"
+        "category": "Combine with Context",
+        "icon": "$(discard)"
       },
       {
         "command": "combineWithContext.showLog",
         "title": "CC: Show Log",
-        "category": "Combine with Context"
+        "category": "Combine with Context",
+        "icon": "$(output)"
       }
     ],
     "submenus": [
@@ -90,6 +96,30 @@
           "group": "9_cutcopypaste@6"
         }
       ],
+      "editor/context": [
+        {
+          "command": "combineWithContext.copyToClipboard",
+          "group": "9_cutcopypaste@3"
+        },
+        {
+          "submenu": "combineWithContext.saveAs",
+          "group": "9_cutcopypaste@4"
+        },
+        {
+          "command": "combineWithContext.updateLast",
+          "group": "9_cutcopypaste@5"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "combineWithContext.copyToClipboard",
+          "group": "1_cutcopypaste@3"
+        },
+        {
+          "submenu": "combineWithContext.saveAs",
+          "group": "1_cutcopypaste@4"
+        }
+      ],
       "combineWithContext.saveAs": [
         {
           "command": "combineWithContext.saveToPasteFile",
@@ -104,28 +134,23 @@
     "keybindings": [
       {
         "command": "combineWithContext.copyToClipboard",
-        "key": "ctrl+alt+shift+c",
-        "when": "explorerViewletFocus"
+        "key": "ctrl+alt+shift+c"
       },
       {
         "command": "combineWithContext.saveAsZip",
-        "key": "ctrl+alt+shift+o",
-        "when": "explorerViewletFocus"
+        "key": "ctrl+alt+shift+o"
       },
       {
         "command": "combineWithContext.saveToPasteFile",
-        "key": "ctrl+alt+shift+p",
-        "when": "explorerViewletFocus"
+        "key": "ctrl+alt+shift+p"
       },
       {
         "command": "combineWithContext.updateLast",
-        "key": "ctrl+alt+shift+u",
-        "when": "explorerViewletFocus"
+        "key": "ctrl+alt+shift+u"
       },
       {
         "command": "combineWithContext.undoLastSave",
-        "key": "ctrl+alt+shift+z",
-        "when": "explorerViewletFocus"
+        "key": "ctrl+alt+shift+z"
       }
     ],
     "configuration": {

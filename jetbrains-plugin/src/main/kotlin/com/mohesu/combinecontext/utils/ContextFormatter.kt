@@ -25,6 +25,45 @@ data class FileInfo(
 class ContextFormatter(private val project: Project) {
     private val settings = CombineContextSettings.getInstance()
     
+    /**
+     * Quick check if the given files would produce any processable results
+     * without doing the full collection process.
+     */
+    fun hasProcessableFiles(selectedFiles: Array<VirtualFile>): Boolean {
+        if (selectedFiles.isEmpty()) return false
+        
+        val projectRoot = project.basePath ?: return false
+        val gitIgnoreFilter = if (settings.useGitignore) {
+            GitIgnoreFilter.fromFile(projectRoot)
+        } else null
+        
+        for (selectedFile in selectedFiles) {
+            if (quickCheckFile(selectedFile, projectRoot, gitIgnoreFilter)) {
+                return true
+            }
+        }
+        return false
+    }
+    
+    private fun quickCheckFile(file: VirtualFile, projectRoot: String, gitIgnoreFilter: GitIgnoreFilter?): Boolean {
+        if (!file.exists()) return false
+        
+        val relativePath = VfsUtil.getRelativePath(file, project.baseDir) ?: return false
+        
+        if (file.isDirectory) {
+            // For directories, assume they might contain processable files
+            return true
+        }
+        
+        // Quick file filtering check
+        if (isFileFiltered(file, relativePath)) return false
+        
+        // Check gitignore
+        if (gitIgnoreFilter?.isIgnored(relativePath) == true) return false
+        
+        return true
+    }
+    
     fun collectFiles(selectedFiles: Array<VirtualFile>): List<FileInfo> {
         val projectRoot = project.basePath ?: return emptyList()
         val gitIgnoreFilter = if (settings.useGitignore) {

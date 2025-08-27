@@ -55,35 +55,40 @@
             <action id="CombineContext.CopyToClipboard"
                     class="com.mohesu.combinecontext.actions.CopyToClipboardAction"
                     text="CC: Copy to Clipboard"
-                    description="Copy selected files/folders to clipboard as formatted markdown">
+                    description="Copy selected files/folders to clipboard as formatted markdown"
+                    icon="AllIcons.Actions.Copy">
                 <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift C"/>
             </action>
             
             <action id="CombineContext.SaveToPasteFile"
                     class="com.mohesu.combinecontext.actions.SaveToPasteFileAction"
                     text="CC: Save to Paste File"
-                    description="Save selected files/folders as markdown file">
+                    description="Save selected files/folders as markdown file"
+                    icon="AllIcons.Actions.MenuSaveall">
                 <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift P"/>
             </action>
             
             <action id="CombineContext.SaveAsZip"
                     class="com.mohesu.combinecontext.actions.SaveAsZipAction"
                     text="CC: Save as ZIP"
-                    description="Save selected files/folders as ZIP archive">
+                    description="Save selected files/folders as ZIP archive"
+                    icon="AllIcons.FileTypes.Archive">
                 <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift O"/>
             </action>
             
             <action id="CombineContext.UpdateLast"
                     class="com.mohesu.combinecontext.actions.UpdateLastAction"
                     text="CC: Update Last Output"
-                    description="Update the last generated output">
+                    description="Update the last generated output"
+                    icon="AllIcons.Actions.Refresh">
                 <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift U"/>
             </action>
             
             <action id="CombineContext.UndoLastSave"
                     class="com.mohesu.combinecontext.actions.UndoLastSaveAction"
                     text="CC: Undo Last Save"
-                    description="Undo the last save operation">
+                    description="Undo the last save operation"
+                    icon="AllIcons.Actions.Rollback">
                 <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift Z"/>
             </action>
         </group>

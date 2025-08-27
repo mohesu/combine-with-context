@@ -1,0 +1,130 @@
+name: Bump version and tag
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        required: false
+        default: "patch"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - prepatch
+          - preminor
+          - premajor
+
+permissions:
+  contents: write
+
+jobs:
+  version-increment:
+    # Only run automatically if commit message contains release keywords; always run when manually dispatched
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, '#release') || contains(github.event.head_commit.message, '#Release') ||
+      contains(github.event.head_commit.message, '#publish') || contains(github.event.head_commit.message, '#Publish') ||
+      contains(github.event.head_commit.message, '#version') || contains(github.event.head_commit.message, '#Version')
+    runs-on: ubuntu-latest
+    concurrency:
+      group: publish-version-${{ github.ref }}
+      cancel-in-progress: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Use a token with write permissions to push tags
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+
+      - name: Setup Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Determine bump type
+        id: bump
+        shell: bash
+        run: |
+          # Default from workflow_dispatch input or fallback to parsing commit message, else patch
+          INPUT_BUMP='${{ inputs.bump }}'
+          MSG='${{ github.event.head_commit.message }}'
+          if [[ -n "$INPUT_BUMP" ]]; then
+            BUMP_TYPE="$INPUT_BUMP"
+          else
+            # Parse markers in commit message, e.g., #major, #minor, #patch
+            if echo "$MSG" | grep -qiE '#(release:)?major|#major'; then BUMP_TYPE=major;
+            elif echo "$MSG" | grep -qiE '#(release:)?minor|#minor'; then BUMP_TYPE=minor;
+            elif echo "$MSG" | grep -qiE '#(release:)?premajor'; then BUMP_TYPE=premajor;
+            elif echo "$MSG" | grep -qiE '#(release:)?preminor'; then BUMP_TYPE=preminor;
+            elif echo "$MSG" | grep -qiE '#(release:)?prepatch'; then BUMP_TYPE=prepatch;
+            else BUMP_TYPE=patch; fi
+          fi
+          echo "type=$BUMP_TYPE" >> $GITHUB_OUTPUT
+          echo "Bump type: $BUMP_TYPE"
+
+      - name: Increment version in package.json
+        id: new_version
+        shell: bash
+        run: |
+          # Use npm to bump and emit the new version (strips leading v)
+          NEW_VERSION=$(npm version --no-git-tag-version "${{ steps.bump.outputs.type }}" | tr -d 'v')
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+      - name: Update JetBrains build.gradle.kts project version
+        shell: bash
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+          sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" jetbrains-plugin/build.gradle.kts
+          echo "Updated build.gradle.kts to version $NEW_VERSION"
+
+      - name: Verify changes
+        run: |
+          echo "=== package.json version ==="
+          node -p "require('./package.json').version"
+          echo "=== build.gradle.kts project version ==="
+          grep "^version = " jetbrains-plugin/build.gradle.kts || true
+
+      - name: Commit version changes
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+          git add package.json jetbrains-plugin/build.gradle.kts
+          git commit -m "Bump version to $NEW_VERSION [skip ci]"
+
+      - name: Create and push tag
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+          TAG_NAME="v$NEW_VERSION"
+          
+          # Create tag
+          if git rev-parse -q --verify "refs/tags/$TAG_NAME" >/dev/null; then
+            echo "Tag $TAG_NAME already exists, skipping create"
+          else
+            git tag "$TAG_NAME"
+            echo "Created tag $TAG_NAME"
+          fi
+          
+          # Push commit and tag
+          git push origin main
+          git push origin "$TAG_NAME"
+          echo "Pushed tag $TAG_NAME"
+          
+          echo "Version increment complete. Tag-based workflows should now trigger."
+

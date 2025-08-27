@@ -11,11 +11,11 @@ permissions:
 
 jobs:
   # Build VS Code extension (.vsix file)
-  build-vscode:
+  build_vscode:
     runs-on: ubuntu-latest
-    outputs:
-      vsix-path: ${{ steps.package.outputs.vsix-path }}
-      vsix-name: ${{ steps.package.outputs.vsix-name }}
+    concurrency:
+      group: build-vscode-${{ github.ref_name }}
+      cancel-in-progress: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,7 +23,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '20'
+          cache: 'pnpm'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
@@ -37,24 +38,20 @@ jobs:
         run: pnpm run package
 
       - name: Package extension
-        id: package
-        run: |
-          pnpm exec vsce package --no-dependencies
-          echo "vsix-path=$(ls *.vsix)" >> $GITHUB_OUTPUT
-          echo "vsix-name=$(basename $(ls *.vsix))" >> $GITHUB_OUTPUT
+        run: pnpm exec vsce package --no-dependencies
 
       - name: Upload VS Code artifact
         uses: actions/upload-artifact@v4
         with:
           name: vscode-extension
-          path: ${{ steps.package.outputs.vsix-path }}
+          path: ./*.vsix
 
   # Build JetBrains plugin (.zip file)
-  build-intellij:
+  build_intellij:
     runs-on: ubuntu-latest
-    outputs:
-      plugin-path: ${{ steps.plugin.outputs.plugin-path }}
-      plugin-name: ${{ steps.plugin.outputs.plugin-name }}
+    concurrency:
+      group: build-intellij-${{ github.ref_name }}
+      cancel-in-progress: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -76,24 +73,19 @@ jobs:
         working-directory: ./jetbrains-plugin
         run: ./gradlew buildPlugin
 
-      - name: Get plugin artifact
-        id: plugin
-        working-directory: ./jetbrains-plugin
-        run: |
-          PLUGIN_PATH=$(find build/distributions -name "*.zip" -type f | head -1)
-          echo "plugin-path=${PLUGIN_PATH}" >> $GITHUB_OUTPUT
-          echo "plugin-name=$(basename ${PLUGIN_PATH})" >> $GITHUB_OUTPUT
-
       - name: Upload IntelliJ artifact
         uses: actions/upload-artifact@v4
         with:
           name: intellij-plugin
-          path: jetbrains-plugin/${{ steps.plugin.outputs.plugin-path }}
+          path: jetbrains-plugin/build/distributions/*.zip
 
   # Create GitHub release with both artifacts
-  create-release:
-    needs: [build-vscode, build-intellij]
+  create_release:
+    needs: [build_vscode, build_intellij]
     runs-on: ubuntu-latest
+    concurrency:
+      group: create-release-${{ github.ref_name }}
+      cancel-in-progress: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -110,6 +102,24 @@ jobs:
           name: intellij-plugin
           path: ./artifacts
 
+      - name: Determine artifact names
+        id: names
+        run: |
+          VSIX=$(ls artifacts/*.vsix | head -1)
+          ZIP=$(ls artifacts/*.zip | head -1)
+          echo "vsix_name=$(basename "$VSIX")" >> $GITHUB_OUTPUT
+          echo "plugin_name=$(basename "$ZIP")" >> $GITHUB_OUTPUT
+
+      - name: Generate checksums
+        run: |
+          cd artifacts
+          for f in *; do
+            if [ -f "$f" ]; then
+              sha256sum "$f" > "$f.sha256"
+            fi
+          done
+          ls -la
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -121,15 +131,15 @@ jobs:
             This release includes both the VS Code extension and JetBrains plugin.
             
             ### VS Code Extension
-            **File**: `${{ needs.build-vscode.outputs.vsix-name }}`
+            **File**: `${{ steps.names.outputs.vsix_name }}`
             
             **Installation**:
             - Download the `.vsix` file
             - In VS Code: Command Palette → "Extensions: Install from VSIX..."
-            - Or via command line: `code --install-extension ${{ needs.build-vscode.outputs.vsix-name }}`
+            - Or via command line: `code --install-extension ${{ steps.names.outputs.vsix_name }}`
             
             ### JetBrains Plugin
-            **File**: `${{ needs.build-intellij.outputs.plugin-name }}`
+            **File**: `${{ steps.names.outputs.plugin_name }}`
             
             **Installation**:
             1. Download the `.zip` file
@@ -145,3 +155,72 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish_marketplaces:
+    name: Publish VS Code extension to marketplaces
+    needs: [build_vscode]
+    runs-on: ubuntu-latest
+    env:
+      OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
+      VS_MARKETPLACE_TOKEN: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+    steps:
+      - name: Download VS Code artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vscode-extension
+          path: ./artifacts
+
+      - name: Find VSIX file
+        id: find_vsix
+        run: echo "path=$(ls artifacts/*.vsix | head -1)" >> $GITHUB_OUTPUT
+
+      - name: List artifacts
+        run: ls -la ./artifacts
+
+      - name: Publish to Open VSX Registry
+        uses: HaaLeo/publish-vscode-extension@v1
+        with:
+          pat: ${{ env.OPEN_VSX_TOKEN }}
+          extensionFile: ${{ steps.find_vsix.outputs.path }}
+          registryUrl: https://open-vsx.org
+          skipDuplicate: true
+        if: ${{ env.OPEN_VSX_TOKEN != '' }}
+
+      - name: Publish to Visual Studio Marketplace
+        uses: HaaLeo/publish-vscode-extension@v1
+        with:
+          pat: ${{ env.VS_MARKETPLACE_TOKEN }}
+          registryUrl: https://marketplace.visualstudio.com
+          extensionFile: ${{ steps.find_vsix.outputs.path }}
+          skipDuplicate: true
+        if: ${{ env.VS_MARKETPLACE_TOKEN != '' }}
+
+  publish_jetbrains:
+    name: Publish JetBrains plugin (optional)
+    needs: [build_intellij]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v3
+
+      - name: Make gradlew executable
+        working-directory: ./jetbrains-plugin
+        run: chmod +x gradlew
+
+      - name: Publish plugin to JetBrains Marketplace
+        working-directory: ./jetbrains-plugin
+        run: |
+          if [ -z "$PUBLISH_TOKEN" ]; then
+            echo "PUBLISH_TOKEN not set; skipping publish to JetBrains Marketplace."
+          else
+            ./gradlew publishPlugin
+          fi

@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+    tags-ignore:
+      - 'v*.*.*'
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  vscode:
+    name: VS Code - build and test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Typecheck
+        run: pnpm run checktypes
+
+      - name: Test
+        run: pnpm test -- --ci --reporters=default --reporters=jest-junit
+        env:
+          JEST_JUNIT_OUTPUT_DIR: reports/junit
+
+      - name: Package extension
+        run: pnpm run package
+
+      - name: Upload packaged extension (artifact)
+        if: ${{ runner.os == 'Linux' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-extension
+          path: ./*.vsix
+
+  jetbrains:
+    name: JetBrains - build plugin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v3
+
+      - name: Make gradlew executable
+        working-directory: ./jetbrains-plugin
+        run: chmod +x gradlew
+
+      - name: Build plugin
+        working-directory: ./jetbrains-plugin
+        run: ./gradlew buildPlugin
+
+      - name: Upload plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: intellij-plugin
+          path: jetbrains-plugin/build/distributions/*.zip

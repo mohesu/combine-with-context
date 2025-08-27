@@ -29,7 +29,8 @@ dependencies {
 // Configure IntelliJ Platform Plugin
 intellijPlatform {
     pluginConfiguration {
-        version = "25.8.2705"
+    // Keep plugin version in sync with project version (updated by workflows)
+    version = project.version.toString()
     }
 }
 

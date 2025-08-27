@@ -28,11 +28,25 @@
 The project includes automated GitHub Actions workflows for creating releases:
 
 ### Creating a Release
+
+#### Automated Release (Recommended)
+Simply include one of these keywords in your commit message when pushing to main:
+- `#release` or `#Release`
+- `#publish` or `#Publish`
+
+The `auto-version-increment.yml` workflow will automatically:
+1. Increment the patch version in both `package.json` and `jetbrains-plugin/build.gradle.kts`
+2. Commit the version changes
+3. Create and push a version tag (e.g., `v25.8.2706`)
+4. Trigger the release workflows
+
+#### Manual Release
 1. Update version in `package.json` and `jetbrains-plugin/build.gradle.kts`
 2. Commit and push changes
 3. Create and push a version tag: `git tag v2.5.1 && git push origin v2.5.1`
 
 ### Available Workflows
+- **auto-version-increment.yml**: Automatically increments version and creates tags on commit keywords
 - **release.yml**: Creates a unified release with both VS Code (.vsix) and JetBrains (.zip) artifacts
 - **release-vscode.yml**: Creates VS Code extension release only
 - **release-intellij.yml**: Creates JetBrains plugin release only

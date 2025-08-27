@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.9.23"
-    id("org.jetbrains.intellij") version "1.17.4"
+    id("org.jetbrains.intellij.platform") version "2.0.1"
 }
 
 group = "com.mohesu"
@@ -10,17 +10,27 @@ version = "25.8.2705"
 repositories {
     mavenCentral()
     gradlePluginPortal()
+    
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    intellijPlatform {
+        intellijIdeaCommunity("2024.2.4")
+        bundledPlugin("com.intellij.java")
+        pluginVerifier()
+        zipSigner()
+        instrumentationTools()
+    }
 }
 
-// Configure Gradle IntelliJ Plugin
-intellij {
-    version.set("2024.2.4")
-    type.set("IC") // Target IDE Platform
-    plugins.set(listOf())
+// Configure IntelliJ Platform Plugin
+intellijPlatform {
+    pluginConfiguration {
+        version = "25.8.2705"
+    }
 }
 
 tasks {
@@ -34,7 +44,7 @@ tasks {
     }
 
     patchPluginXml {
-        sinceBuild.set("232")
+        sinceBuild.set("242")
         untilBuild.set(provider { null })
     }
 

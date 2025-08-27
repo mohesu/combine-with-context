@@ -19,6 +19,13 @@
       ]]></description>
 
     <change-notes><![CDATA[
+      <b>2.4.3</b>
+      <ul>
+        <li>Updated compatibility for latest IDE versions (2023.2 - 2024.3)</li>
+        <li>Updated IntelliJ plugin dependencies and Kotlin version</li>
+        <li>Enhanced support for latest IntelliJ IDEA, WebStorm, PyCharm versions</li>
+        <li>Improved IDE platform targeting for better future compatibility</li>
+      </ul>
       <b>2.4.2</b>
       <ul>
         <li>Initial JetBrains IDE support</li>

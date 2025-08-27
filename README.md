@@ -39,6 +39,11 @@
 - Effortlessly resave your last selection, streamlining repeated workflows.
 - Supports advanced filtering (e.g., `.gitignore`, binary/image exclusion) for clean outputs.
 - Handles large projects efficiently with progress notifications and error handling.
+- **🆕 Enhanced Menu Placement**: Context menus now appear near copy/paste areas in both VS Code and JetBrains IDEs for better accessibility.
+- **🆕 Visual Icons**: All commands now have intuitive icons for better recognition.
+- **🆕 Smart Confirmations**: Automatic confirmation dialogs for large operations to prevent accidental processing.
+- **🆕 Improved Performance**: Optimized file checking to avoid expensive operations during UI updates.
+- **🆕 Better Accessibility**: Keyboard shortcuts now work globally in VS Code, not just in explorer view.
 - Designed for reliability, traceability, and ease of use in production environments.
 
 - **Multi-select**: Select any files and/or folders in VS Code Explorer.

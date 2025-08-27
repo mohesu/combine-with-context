@@ -622,10 +622,25 @@ async function handleCopyToClipboard(uri: vscode.Uri, uris?: vscode.Uri[]) {
           return;
         }
 
+        // Calculate total size for confirmation
+        let totalBytes = 0;
+        for (const fileUri of collected.files) {
+          const stat = await vscode.workspace.fs.stat(fileUri);
+          totalBytes += stat.size;
+        }
+        
+        // Show confirmation for large operations
+        if (collected.files.length > WARN_FILE_COUNT || totalBytes > WARN_BYTES_TOTAL) {
+          const proceed = await vscode.window.showQuickPick(['Proceed', 'Cancel'], {
+            placeHolder: `You are about to copy ${collected.files.length} files / ${(totalBytes / 1048576).toFixed(2)}MB to clipboard. Proceed?`,
+          });
+          if (proceed !== 'Proceed') {return;}
+        }
+
         const output = await getFormattedContext(collected.files, workspaceRoot, config, collected.relPaths, collected.extCounts);
         try {
           await vscode.env.clipboard.writeText(output);
-          vscode.window.showInformationMessage('Context copied to clipboard!');
+          vscode.window.showInformationMessage(`Context copied to clipboard! (${collected.files.length} files)`);
           log('Context copied to clipboard.');
         } catch (clipErr) {
           vscode.window.showErrorMessage(`Combine with Context: Failed to copy to clipboard.`);

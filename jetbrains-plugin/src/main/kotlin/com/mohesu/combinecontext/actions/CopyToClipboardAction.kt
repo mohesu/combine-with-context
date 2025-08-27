@@ -48,6 +48,17 @@ class CopyToClipboardAction : AnAction() {
                 return
             }
 
+            // Show confirmation for large operations (>10 files or fallback to all open files)
+            if (files.size > 10 || (selectedFiles.size > 1 && e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY).isNullOrEmpty())) {
+                val choice = Messages.showYesNoDialog(
+                    project,
+                    "You are about to copy ${files.size} files to clipboard. Do you want to continue?",
+                    "Combine with Context - Confirm Operation",
+                    Messages.getQuestionIcon()
+                )
+                if (choice != Messages.YES) return
+            }
+
             // Force CharSequence type to resolve overload
             val markdown: CharSequence = formatter.formatAsMarkdown(files)
             val copyPasteManager = CopyPasteManager.getInstance()
@@ -85,12 +96,27 @@ class CopyToClipboardAction : AnAction() {
         val selectedFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
         val currentFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
         
-        // Enable if we have selected files or current file
-        val hasAvailableFiles = !selectedFiles.isNullOrEmpty() || currentFile != null
-        e.presentation.isEnabledAndVisible = hasAvailableFiles
+        // Determine available files for processing
+        val filesToCheck = when {
+            !selectedFiles.isNullOrEmpty() -> selectedFiles
+            currentFile != null -> arrayOf(currentFile)
+            else -> null
+        }
+        
+        // Enable if we have files that would be processable
+        val hasProcessableFiles = filesToCheck?.let { files ->
+            try {
+                val formatter = ContextFormatter(project)
+                formatter.hasProcessableFiles(files)
+            } catch (e: Exception) {
+                false
+            }
+        } ?: false
+        
+        e.presentation.isEnabledAndVisible = hasProcessableFiles
         
         // Update action text based on context for better user understanding
-        if (hasAvailableFiles) {
+        if (hasProcessableFiles) {
             e.presentation.text = when {
                 !selectedFiles.isNullOrEmpty() && selectedFiles.size > 1 -> "CC: Copy ${selectedFiles.size} Files to Clipboard"
                 !selectedFiles.isNullOrEmpty() && selectedFiles.size == 1 -> "CC: Copy Selected File to Clipboard"

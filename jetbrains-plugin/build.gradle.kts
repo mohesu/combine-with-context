@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.mohesu"
-version = "25.8.2706"
+version = "25.8.2707"
 
 repositories {
     mavenCentral()

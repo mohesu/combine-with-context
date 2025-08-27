@@ -69,7 +69,7 @@
 5. **Clipboard**: Use the **CC: Copy to Clipboard** command/menu to copy the formatted context directly.
 6. **Update**: After you've saved a paste or ZIP once, you can regenerate the output with the latest contents of the same files/folders. Right‑click and choose **CC: Update last output**; the extension will determine which format to regenerate based on your most recent save.
 
-**📝 Note**: The same functionality is available in JetBrains IDEs (IntelliJ IDEA, WebStorm, PyCharm, etc.) via the JetBrains plugin located in the [`jetbrains-plugin/`](./jetbrains-plugin/) directory.
+**📝 Note**: The same functionality is available in JetBrains IDEs (IntelliJ IDEA 2023.2+, WebStorm 2023.2+, PyCharm 2023.2+, etc.) via the JetBrains plugin located in the [`jetbrains-plugin/`](./jetbrains-plugin/) directory. The plugin supports all IntelliJ Platform-based IDEs from version 2023.2 through 2024.3.
 
 </details>
 

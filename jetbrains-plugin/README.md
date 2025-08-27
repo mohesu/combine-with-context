@@ -72,17 +72,17 @@ Access settings via **File → Settings → Tools → Combine with Context**
 
 ## Supported IDEs
 
-- IntelliJ IDEA (Community & Ultimate)
-- WebStorm
-- PyCharm (Community & Professional)
-- Android Studio
-- PhpStorm
-- CLion
-- RubyMine
-- DataGrip
-- Rider
-- GoLand
-- And other JetBrains IDEs
+- IntelliJ IDEA (Community & Ultimate) - 2023.2 to 2024.3
+- WebStorm - 2023.2 to 2024.3  
+- PyCharm (Community & Professional) - 2023.2 to 2024.3
+- Android Studio - 2023.2+ (based on IntelliJ platform)
+- PhpStorm - 2023.2 to 2024.3
+- CLion - 2023.2 to 2024.3
+- RubyMine - 2023.2 to 2024.3
+- DataGrip - 2023.2 to 2024.3
+- Rider - 2023.2 to 2024.3
+- GoLand - 2023.2 to 2024.3
+- And other JetBrains IDEs based on IntelliJ Platform
 
 ## Development
 
@@ -107,8 +107,8 @@ Access settings via **File → Settings → Tools → Combine with Context**
 
 ## Version Compatibility
 
-- **Platform Version**: 232-242.*
-- **JetBrains IDEs**: 2023.2+
+- **Platform Version**: 232-243.*
+- **JetBrains IDEs**: 2023.2 - 2024.3
 - **JDK**: 17+
 
 ## License

@@ -1,7 +1,7 @@
 plugins {
     id("java")
-    id("org.jetbrains.kotlin.jvm") version "1.9.20"
-    id("org.jetbrains.intellij") version "1.17.0"
+    id("org.jetbrains.kotlin.jvm") version "1.9.23"
+    id("org.jetbrains.intellij") version "1.17.4"
 }
 
 group = "com.mohesu"
@@ -9,6 +9,7 @@ version = "25.8.2701"
 
 repositories {
     mavenCentral()
+    gradlePluginPortal()
 }
 
 dependencies {
@@ -17,7 +18,7 @@ dependencies {
 
 // Configure Gradle IntelliJ Plugin
 intellij {
-    version.set("2023.2.6")
+    version.set("2024.2.4")
     type.set("IC") // Target IDE Platform
     plugins.set(listOf())
 }
@@ -34,7 +35,7 @@ tasks {
 
     patchPluginXml {
         sinceBuild.set("232")
-        untilBuild.set("252.*")
+        untilBuild.set("243.*")
     }
 
     publishPlugin {

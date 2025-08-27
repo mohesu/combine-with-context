@@ -48,6 +48,7 @@
     </extensions>
 
     <actions>
+        <!-- Main group for project view popup menu -->
         <group id="CombineWithContext" text="Combine with Context" popup="true">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="$Copy"/>
             
@@ -85,6 +86,38 @@
                     description="Undo the last save operation">
                 <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift Z"/>
             </action>
+        </group>
+
+        <!-- Add to editor popup menu for better accessibility near copy/paste -->
+        <group id="CombineWithContextEditor" text="Combine with Context" popup="true">
+            <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
+            
+            <reference ref="CombineContext.CopyToClipboard"/>
+            <reference ref="CombineContext.SaveToPasteFile"/>
+            <reference ref="CombineContext.SaveAsZip"/>
+            <reference ref="CombineContext.UpdateLast"/>
+            <reference ref="CombineContext.UndoLastSave"/>
+        </group>
+
+        <!-- Add to main Edit menu for consistency with copy/paste functionality -->
+        <group id="CombineWithContextEditMenu" text="Combine with Context">
+            <add-to-group group-id="EditMenu" anchor="after" relative-to-action="$Paste"/>
+            
+            <reference ref="CombineContext.CopyToClipboard"/>
+            <reference ref="CombineContext.SaveToPasteFile"/>
+            <reference ref="CombineContext.SaveAsZip"/>
+            <separator/>
+            <reference ref="CombineContext.UpdateLast"/>
+            <reference ref="CombineContext.UndoLastSave"/>
+        </group>
+
+        <!-- Add to editor tab context menu -->
+        <group id="CombineWithContextEditorTab" text="Combine with Context" popup="true">
+            <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CloseEditor"/>
+            
+            <reference ref="CombineContext.CopyToClipboard"/>
+            <reference ref="CombineContext.SaveToPasteFile"/>
+            <reference ref="CombineContext.SaveAsZip"/>
         </group>
     </actions>
 </idea-plugin>

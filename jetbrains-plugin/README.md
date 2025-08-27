@@ -29,13 +29,35 @@ This is the JetBrains IDE plugin version of Combine with Context, providing the 
 
 ## Usage
 
+The plugin provides multiple ways to access its functionality for maximum convenience:
+
+### From Project View
 1. **Select files/folders** in the Project View
-2. **Right-click** and choose from the "Combine with Context" submenu:
-   - **CC: Copy to Clipboard** - Copy formatted context to clipboard
-   - **CC: Save to Paste File** - Save as markdown file
-   - **CC: Save as ZIP** - Create ZIP archive
-   - **CC: Update Last Output** - Regenerate last action
-   - **CC: Undo Last Save** - Restore from backup
+2. **Right-click** and choose from the "Combine with Context" submenu
+
+### From Editor
+1. **Right-click** in any open file editor
+2. Choose from the "Combine with Context" submenu (works with current file)
+
+### From Edit Menu
+1. Access via **Edit > Combine with Context** in the main menu bar
+2. Actions work with currently selected files or active editor file
+
+### From Editor Tabs
+1. **Right-click** on any editor tab
+2. Choose from the "Combine with Context" submenu
+
+### Available Actions
+- **CC: Copy to Clipboard** - Copy formatted context to clipboard
+- **CC: Save to Paste File** - Save as markdown file  
+- **CC: Save as ZIP** - Create ZIP archive
+- **CC: Update Last Output** - Regenerate last action
+- **CC: Undo Last Save** - Restore from backup
+
+**Smart Context Detection**: Actions automatically work with:
+- Selected files/folders in Project View (when available)
+- Current file in active editor (fallback)
+- All open files in editor (last resort)
 
 ## Keyboard Shortcuts
 

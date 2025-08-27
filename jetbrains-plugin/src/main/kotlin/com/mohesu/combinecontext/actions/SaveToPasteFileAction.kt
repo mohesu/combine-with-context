@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.mohesu.combinecontext.settings.CombineContextSettings
 import com.mohesu.combinecontext.utils.ContextFormatter
 import java.io.File
@@ -15,10 +16,27 @@ class SaveToPasteFileAction : AnAction() {
     
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        val selectedFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return
+        var selectedFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
         
-        if (selectedFiles.isEmpty()) {
-            Messages.showWarningDialog(project, "No files selected", "Combine with Context")
+        // If no files selected from project view, try to get current file from editor
+        if (selectedFiles.isNullOrEmpty()) {
+            val currentFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
+            if (currentFile != null) {
+                selectedFiles = arrayOf(currentFile)
+            }
+        }
+        
+        // As a last resort, try to get files from open editors
+        if (selectedFiles.isNullOrEmpty()) {
+            val fileEditorManager = FileEditorManager.getInstance(project)
+            val openFiles = fileEditorManager.openFiles
+            if (openFiles.isNotEmpty()) {
+                selectedFiles = openFiles
+            }
+        }
+        
+        if (selectedFiles.isNullOrEmpty()) {
+            Messages.showWarningDialog(project, "No files available to process. Please select files in the project view or open a file in the editor.", "Combine with Context")
             return
         }
         
@@ -91,7 +109,27 @@ class SaveToPasteFileAction : AnAction() {
     
     override fun update(e: AnActionEvent) {
         val project = e.project
+        if (project == null) {
+            e.presentation.isEnabledAndVisible = false
+            return
+        }
+        
+        // Check multiple sources for available files (in order of preference)
         val selectedFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
-        e.presentation.isEnabledAndVisible = project != null && !selectedFiles.isNullOrEmpty()
+        val currentFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
+        
+        // Enable if we have selected files or current file
+        val hasAvailableFiles = !selectedFiles.isNullOrEmpty() || currentFile != null
+        e.presentation.isEnabledAndVisible = hasAvailableFiles
+        
+        // Update action text based on context for better user understanding
+        if (hasAvailableFiles) {
+            e.presentation.text = when {
+                !selectedFiles.isNullOrEmpty() && selectedFiles.size > 1 -> "CC: Save ${selectedFiles.size} Files to Paste File"
+                !selectedFiles.isNullOrEmpty() && selectedFiles.size == 1 -> "CC: Save Selected File to Paste File"
+                currentFile != null -> "CC: Save Current File to Paste File"
+                else -> "CC: Save to Paste File"
+            }
+        }
     }
 }

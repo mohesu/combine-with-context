@@ -4,6 +4,11 @@
 
 **Now available for both VS Code and JetBrains IDEs!**
 
+![Open VSX Version](https://img.shields.io/open-vsx/v/mohesu/combine-with-context)
+![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/mohesu.combine-with-context)
+![JetBrains Plugin Version](https://img.shields.io/jetbrains/plugin/v/28309-combine-with-context)
+<!-- ![GitHub Repo stars](https://img.shields.io/github/stars/mohesu/combine-with-context) -->
+
 ---
 
 ## 📑 Table of Contents
@@ -21,9 +26,9 @@
 
 ## 🎯 IDE Support
 
-**VS Code Extension**: Available on the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mohesu.combine-with-context)
+**VS Code Extension**: Available on the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mohesu.combine-with-context) & [Open VSX Registry](https://open-vsx.org/extension/mohesu/combine-with-context)
 
-**JetBrains Plugin**: Support for IntelliJ IDEA, WebStorm, PyCharm, Android Studio, CLion, PhpStorm, RubyMine, GoLand, Rider, and more!
+**JetBrains Plugin**: Support for IntelliJ IDEA, WebStorm, PyCharm, Android Studio, CLion, PhpStorm, RubyMine, GoLand, Rider, and more! Available on the [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/28309-combine-with-context)
 - Source code available in the [`jetbrains-plugin/`](./jetbrains-plugin/) directory
 - Full feature parity with VS Code extension
 - Native IDE integration with context menus and keyboard shortcuts

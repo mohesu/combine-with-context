@@ -114,13 +114,22 @@ class SaveToPasteFileAction : AnAction() {
             return
         }
         
-        // Check multiple sources for available files
+        // Check multiple sources for available files (in order of preference)
         val selectedFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
         val currentFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
-        val hasOpenFiles = FileEditorManager.getInstance(project).openFiles.isNotEmpty()
         
-        // Enable if we have selected files, current file, or open files
-        val hasAvailableFiles = !selectedFiles.isNullOrEmpty() || currentFile != null || hasOpenFiles
+        // Enable if we have selected files or current file
+        val hasAvailableFiles = !selectedFiles.isNullOrEmpty() || currentFile != null
         e.presentation.isEnabledAndVisible = hasAvailableFiles
+        
+        // Update action text based on context for better user understanding
+        if (hasAvailableFiles) {
+            e.presentation.text = when {
+                !selectedFiles.isNullOrEmpty() && selectedFiles.size > 1 -> "CC: Save ${selectedFiles.size} Files to Paste File"
+                !selectedFiles.isNullOrEmpty() && selectedFiles.size == 1 -> "CC: Save Selected File to Paste File"
+                currentFile != null -> "CC: Save Current File to Paste File"
+                else -> "CC: Save to Paste File"
+            }
+        }
     }
 }

@@ -2,7 +2,7 @@
 
 > A robust, feature-rich way to export code context to a markdown file (`paste.md`) or zip file (`context.zip`) for AI/LLM workflows, with advanced filtering, .gitignore support, history/undo, file tree/analysis, content compression, symlink handling, and full customization.
 
-**Now available for both VS Code and JetBrains IDEs!**
+**Now available for VS Code, JetBrains IDEs, and Zed!**
 
 [![Open VSX Version](https://img.shields.io/open-vsx/v/mohesu/combine-with-context)](https://open-vsx.org/extension/mohesu/combine-with-context)
 [![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/mohesu.combine-with-context)](https://marketplace.visualstudio.com/items?itemName=mohesu.combine-with-context)
@@ -32,6 +32,12 @@
 - Source code available in the [`jetbrains-plugin/`](./jetbrains-plugin/) directory
 - Full feature parity with VS Code extension
 - Native IDE integration with context menus and keyboard shortcuts
+
+**Zed Extension**: Coming soon to the Zed extension registry! Provides AI-friendly context through slash commands.
+- Source code available in the [`zed-extension/`](./zed-extension/) directory
+- Use `/combine` slash command in Zed's assistant to generate formatted context
+- Automatic file tree generation and syntax highlighting
+- Smart filtering with .gitignore support
 
 ---
 

@@ -1,0 +1,12 @@
+id = "combine-with-context"
+name = "Combine with Context"
+description = "Export project code context in clean Markdown for LLMs. Provides slash commands to combine files with smart filtering and .gitignore support."
+version = "0.1.0"
+schema_version = 1
+authors = ["mohesu <https://github.com/mohesu>"]
+repository = "https://github.com/mohesu/combine-with-context"
+
+[slash_commands.combine]
+description = "Combine selected files into formatted markdown for AI context"
+tooltip = "Generates a markdown file with file tree, analysis, and content from your project"
+requires_argument = false

@@ -1,0 +1,6 @@
+# Rust/Cargo
+/target/
+**/*.rs.bk
+
+# Build artifacts
+*.wasm

@@ -8,12 +8,12 @@ Export project code context in clean Markdown format for LLMs with smart filteri
 - **File Tree**: Automatically generates a visual file tree of your project
 - **File Analysis**: Shows file type distribution and counts
 - **Smart Filtering**: 
-  - Respects `.gitignore` patterns
-  - Skips binary files (images, executables, archives)
   - Excludes common build directories (`node_modules`, `target`, `dist`, `build`)
-  - Filters hidden files
+  - Skips binary files (detected by extension and content analysis)
+  - Filters hidden files (starting with `.`)
   - Ignores files larger than 5MB
   - Skips empty files
+  - Note: Full `.gitignore` pattern support is planned for a future release
 - **Syntax Highlighting**: Automatically detects and applies appropriate language syntax for code blocks
 
 ## Installation

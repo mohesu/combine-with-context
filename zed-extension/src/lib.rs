@@ -49,15 +49,17 @@ impl CombineWithContextExtension {
         
         // Build file tree and collect files
         if let Ok(entries) = fs::read_dir(&root_path) {
-            self.process_directory(
-                &entries.collect::<Result<Vec<_>, _>>().unwrap_or_default(),
-                &root_path,
-                &gitignore_content,
-                0,
-                &mut files,
-                &mut file_tree,
-                &mut file_analysis,
-            );
+            for entry in entries.flatten() {
+                self.process_entry(
+                    &entry,
+                    &root_path,
+                    &gitignore_content,
+                    0,
+                    &mut files,
+                    &mut file_tree,
+                    &mut file_analysis,
+                );
+            }
         }
         
         // Build the output markdown
@@ -93,21 +95,22 @@ impl CombineWithContextExtension {
             output.push_str("\n```\n\n");
         }
         
+        let output_len = output.len() as u32;
         Ok(SlashCommandOutput {
-            text: output.clone(),
+            text: output,
             sections: vec![SlashCommandOutputSection {
                 range: zed_extension_api::Range {
                     start: 0,
-                    end: output.len() as u32,
+                    end: output_len,
                 },
                 label: "Combined Context".to_string(),
             }],
         })
     }
     
-    fn process_directory(
+    fn process_entry(
         &self,
-        entries: &[fs::DirEntry],
+        entry: &fs::DirEntry,
         base_path: &PathBuf,
         gitignore: &str,
         depth: usize,
@@ -115,28 +118,28 @@ impl CombineWithContextExtension {
         file_tree: &mut String,
         file_analysis: &mut HashMap<String, usize>,
     ) {
-        for entry in entries {
-            let path = entry.path();
-            let file_name = entry.file_name().to_string_lossy().to_string();
+        let path = entry.path();
+        let file_name = entry.file_name().to_string_lossy().to_string();
+        
+        // Skip hidden files and common ignored directories
+        if file_name.starts_with('.') 
+            || file_name == "node_modules" 
+            || file_name == "target" 
+            || file_name == "dist"
+            || file_name == "build"
+            || self.is_ignored(&path, gitignore) {
+            return;
+        }
+        
+        let indent = "  ".repeat(depth);
+        
+        if path.is_dir() {
+            file_tree.push_str(&format!("{}📁 {}/\n", indent, file_name));
             
-            // Skip hidden files and common ignored directories
-            if file_name.starts_with('.') 
-                || file_name == "node_modules" 
-                || file_name == "target" 
-                || file_name == "dist"
-                || file_name == "build"
-                || self.is_ignored(&path, gitignore) {
-                continue;
-            }
-            
-            let indent = "  ".repeat(depth);
-            
-            if path.is_dir() {
-                file_tree.push_str(&format!("{}📁 {}/\n", indent, file_name));
-                
-                if let Ok(sub_entries) = fs::read_dir(&path) {
-                    self.process_directory(
-                        &sub_entries.collect::<Result<Vec<_>, _>>().unwrap_or_default(),
+            if let Ok(sub_entries) = fs::read_dir(&path) {
+                for sub_entry in sub_entries.flatten() {
+                    self.process_entry(
+                        &sub_entry,
                         base_path,
                         gitignore,
                         depth + 1,
@@ -145,56 +148,71 @@ impl CombineWithContextExtension {
                         file_analysis,
                     );
                 }
-            } else if path.is_file() && !self.is_binary_file(&path) {
-                file_tree.push_str(&format!("{}📄 {}\n", indent, file_name));
+            }
+        } else if path.is_file() && !self.is_binary_file(&path) {
+            file_tree.push_str(&format!("{}📄 {}\n", indent, file_name));
+            
+            // Read file content
+            if let Ok(content) = fs::read_to_string(&path) {
+                // Skip empty files
+                if content.trim().is_empty() {
+                    return;
+                }
                 
-                // Read file content
-                if let Ok(content) = fs::read_to_string(&path) {
-                    // Skip empty files
-                    if content.trim().is_empty() {
-                        continue;
-                    }
-                    
-                    // Skip very large files (> 5MB)
-                    if content.len() > 5_242_880 {
-                        continue;
-                    }
-                    
-                    let rel_path = path
-                        .strip_prefix(base_path)
-                        .unwrap_or(&path)
-                        .to_string_lossy()
-                        .to_string();
-                    
-                    files.push((rel_path.clone(), content));
-                    
-                    // Track file extension
-                    if let Some(ext) = path.extension() {
-                        let ext_str = ext.to_string_lossy().to_string();
-                        *file_analysis.entry(ext_str).or_insert(0) += 1;
-                    }
+                // Skip very large files (> 5MB)
+                if content.len() > 5_242_880 {
+                    return;
+                }
+                
+                let rel_path = path
+                    .strip_prefix(base_path)
+                    .unwrap_or(&path)
+                    .to_string_lossy()
+                    .to_string();
+                
+                files.push((rel_path.clone(), content));
+                
+                // Track file extension
+                if let Some(ext) = path.extension() {
+                    let ext_str = ext.to_string_lossy().to_string();
+                    *file_analysis.entry(ext_str).or_insert(0) += 1;
                 }
             }
         }
     }
     
     fn is_binary_file(&self, path: &PathBuf) -> bool {
+        // First check by extension
         if let Some(ext) = path.extension() {
             let ext_str = ext.to_string_lossy().to_lowercase();
-            matches!(
+            if matches!(
                 ext_str.as_str(),
                 "png" | "jpg" | "jpeg" | "gif" | "exe" | "dll" | "ico" 
                 | "svg" | "webp" | "bmp" | "tiff" | "zip" | "tar" | "gz" 
-                | "bin" | "so" | "dylib" | "a" | "o"
-            )
-        } else {
-            false
+                | "bin" | "so" | "dylib" | "a" | "o" | "pdf" | "mp4" | "mp3"
+                | "avi" | "mov" | "wav" | "ttf" | "otf" | "woff" | "woff2"
+                | "eot" | "pyc" | "class" | "jar" | "war" | "ear"
+            ) {
+                return true;
+            }
         }
+        
+        // Check file content for null bytes (indicates binary)
+        if let Ok(mut file) = fs::File::open(path) {
+            use std::io::Read;
+            let mut buffer = [0; 512];
+            if let Ok(bytes_read) = file.read(&mut buffer) {
+                return buffer[..bytes_read].contains(&0);
+            }
+        }
+        
+        false
     }
     
     fn is_ignored(&self, _path: &PathBuf, _gitignore: &str) -> bool {
-        // Simple gitignore check - in production would use a proper gitignore parser
-        // For now, just return false to include most files
+        // TODO: Implement proper gitignore parsing
+        // Currently only excludes common directories in process_directory()
+        // For full .gitignore support, consider adding the 'ignore' crate dependency
         false
     }
     

@@ -211,7 +211,7 @@ impl CombineWithContextExtension {
     
     fn is_ignored(&self, _path: &PathBuf, _gitignore: &str) -> bool {
         // TODO: Implement proper gitignore parsing
-        // Currently only excludes common directories in process_directory()
+        // Currently only excludes common directories in process_entry()
         // For full .gitignore support, consider adding the 'ignore' crate dependency
         false
     }

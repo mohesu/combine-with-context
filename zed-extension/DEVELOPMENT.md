@@ -75,7 +75,7 @@ zed-extension/
   - `CombineWithContextExtension` struct implementing `zed::Extension` trait
   - `run_slash_command()`: Handles the `/combine` command
   - `combine_files()`: Main logic for collecting and formatting files
-  - `process_directory()`: Recursively processes directories
+  - `process_entry()`: Recursively processes directory entries
   - Helper functions for filtering and formatting
 
 ## Making Changes

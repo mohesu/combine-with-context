@@ -1,4 +1,4 @@
-use zed_extension_api::{self as zed, Command, LanguageServerId, Result, SlashCommand, SlashCommandOutput, SlashCommandOutputSection};
+use zed_extension_api::{self as zed, Result, SlashCommand, SlashCommandOutput, SlashCommandOutputSection};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
@@ -14,10 +14,16 @@ impl zed::Extension for CombineWithContextExtension {
         &self,
         command: SlashCommand,
         _args: Vec<String>,
-        worktree: &zed::Worktree,
+        worktree: Option<&zed::Worktree>,
     ) -> Result<SlashCommandOutput> {
         match command.name.as_str() {
-            "combine" => self.combine_files(worktree),
+            "combine" => {
+                if let Some(wt) = worktree {
+                    self.combine_files(wt)
+                } else {
+                    Err("No worktree available".into())
+                }
+            }
             _ => Err("Unknown command".into()),
         }
     }
@@ -25,7 +31,8 @@ impl zed::Extension for CombineWithContextExtension {
 
 impl CombineWithContextExtension {
     fn combine_files(&self, worktree: &zed::Worktree) -> Result<SlashCommandOutput> {
-        let root_path = worktree.root_path();
+        let root_path_str = worktree.root_path();
+        let root_path = PathBuf::from(root_path_str);
         
         // Collect all text files from the worktree
         let mut files = Vec::new();
@@ -87,9 +94,12 @@ impl CombineWithContextExtension {
         }
         
         Ok(SlashCommandOutput {
-            text: output,
+            text: output.clone(),
             sections: vec![SlashCommandOutputSection {
-                range: 0..output.len(),
+                range: zed_extension_api::Range {
+                    start: 0,
+                    end: output.len() as u32,
+                },
                 label: "Combined Context".to_string(),
             }],
         })

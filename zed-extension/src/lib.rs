@@ -170,13 +170,13 @@ impl CombineWithContextExtension {
                     .to_string_lossy()
                     .to_string();
                 
-                files.push((rel_path.clone(), content));
-                
                 // Track file extension
                 if let Some(ext) = path.extension() {
                     let ext_str = ext.to_string_lossy().to_string();
                     *file_analysis.entry(ext_str).or_insert(0) += 1;
                 }
+                
+                files.push((rel_path, content));
             }
         }
     }

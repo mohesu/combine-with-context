@@ -67,10 +67,13 @@ The generated context is perfect for:
 
 The extension uses sensible defaults and doesn't require configuration. It automatically:
 
-- Respects your `.gitignore` file
-- Filters out binary files and common build artifacts
-- Limits file size to prevent huge outputs
+- Filters out binary files (by extension and content analysis)
+- Excludes common build artifacts (`node_modules`, `target`, `dist`, `build`)
+- Skips hidden files (starting with `.`)
+- Limits file size to prevent huge outputs (5MB max)
 - Applies appropriate syntax highlighting based on file extensions
+
+**Note:** Full `.gitignore` pattern support is planned for a future release. Currently, common directories are filtered, but custom gitignore patterns are not yet implemented.
 
 ## Supported File Types
 

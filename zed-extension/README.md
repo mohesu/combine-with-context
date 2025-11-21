@@ -1,6 +1,6 @@
 # Combine with Context - Zed Extension
 
-Export project code context in clean Markdown format for LLMs with smart filtering and .gitignore support.
+Export project code context in clean Markdown format for LLMs with smart filtering.
 
 ## Features
 

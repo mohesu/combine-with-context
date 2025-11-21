@@ -83,9 +83,10 @@ impl CombineWithContextExtension {
         // Add file contents
         output.push_str("## File Contents\n\n");
         for (rel_path, content) in files {
-            let ext = rel_path
-                .split('.')
-                .last()
+            let path_buf = PathBuf::from(&rel_path);
+            let ext = path_buf
+                .extension()
+                .and_then(|s| s.to_str())
                 .unwrap_or("txt");
             
             output.push_str("---\n\n");
@@ -210,9 +211,12 @@ impl CombineWithContextExtension {
     }
     
     fn is_ignored(&self, _path: &PathBuf, _gitignore: &str) -> bool {
-        // TODO: Implement proper gitignore parsing
-        // Currently only excludes common directories in process_entry()
-        // For full .gitignore support, consider adding the 'ignore' crate dependency
+        // TODO: Implement proper gitignore parsing using a library like 'ignore' crate
+        // Currently, this function is a placeholder that returns false.
+        // Filtering is done in process_entry() by excluding common directories like
+        // node_modules, target, dist, build, and hidden files starting with '.'
+        // For full .gitignore pattern support, this would need to parse and apply
+        // gitignore rules from the provided string parameter.
         false
     }
     

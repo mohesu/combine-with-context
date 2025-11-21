@@ -1,0 +1,224 @@
+use zed_extension_api::{self as zed, Command, LanguageServerId, Result, SlashCommand, SlashCommandOutput, SlashCommandOutputSection};
+use std::collections::HashMap;
+use std::fs;
+use std::path::PathBuf;
+
+struct CombineWithContextExtension;
+
+impl zed::Extension for CombineWithContextExtension {
+    fn new() -> Self {
+        Self
+    }
+
+    fn run_slash_command(
+        &self,
+        command: SlashCommand,
+        _args: Vec<String>,
+        worktree: &zed::Worktree,
+    ) -> Result<SlashCommandOutput> {
+        match command.name.as_str() {
+            "combine" => self.combine_files(worktree),
+            _ => Err("Unknown command".into()),
+        }
+    }
+}
+
+impl CombineWithContextExtension {
+    fn combine_files(&self, worktree: &zed::Worktree) -> Result<SlashCommandOutput> {
+        let root_path = worktree.root_path();
+        
+        // Collect all text files from the worktree
+        let mut files = Vec::new();
+        let mut file_tree = String::new();
+        let mut file_analysis = HashMap::new();
+        
+        // Read .gitignore if it exists
+        let gitignore_path = root_path.join(".gitignore");
+        let gitignore_content = if gitignore_path.exists() {
+            fs::read_to_string(gitignore_path).unwrap_or_default()
+        } else {
+            String::new()
+        };
+        
+        // Build file tree and collect files
+        if let Ok(entries) = fs::read_dir(&root_path) {
+            self.process_directory(
+                &entries.collect::<Result<Vec<_>, _>>().unwrap_or_default(),
+                &root_path,
+                &gitignore_content,
+                0,
+                &mut files,
+                &mut file_tree,
+                &mut file_analysis,
+            );
+        }
+        
+        // Build the output markdown
+        let mut output = String::new();
+        output.push_str("# Combined Context for AI\n\n");
+        
+        // Add file tree
+        output.push_str("## File Tree\n\n```\n");
+        output.push_str(&file_tree);
+        output.push_str("```\n\n");
+        
+        // Add file analysis
+        if !file_analysis.is_empty() {
+            output.push_str("## File Analysis\n\n");
+            for (ext, count) in file_analysis.iter() {
+                output.push_str(&format!("- {}: {} files\n", ext, count));
+            }
+            output.push_str("\n");
+        }
+        
+        // Add file contents
+        output.push_str("## File Contents\n\n");
+        for (rel_path, content) in files {
+            let ext = rel_path
+                .split('.')
+                .last()
+                .unwrap_or("txt");
+            
+            output.push_str("---\n\n");
+            output.push_str(&format!("### {}\n\n", rel_path));
+            output.push_str(&format!("```{}\n", self.get_language_for_extension(ext)));
+            output.push_str(&content);
+            output.push_str("\n```\n\n");
+        }
+        
+        Ok(SlashCommandOutput {
+            text: output,
+            sections: vec![SlashCommandOutputSection {
+                range: 0..output.len(),
+                label: "Combined Context".to_string(),
+            }],
+        })
+    }
+    
+    fn process_directory(
+        &self,
+        entries: &[fs::DirEntry],
+        base_path: &PathBuf,
+        gitignore: &str,
+        depth: usize,
+        files: &mut Vec<(String, String)>,
+        file_tree: &mut String,
+        file_analysis: &mut HashMap<String, usize>,
+    ) {
+        for entry in entries {
+            let path = entry.path();
+            let file_name = entry.file_name().to_string_lossy().to_string();
+            
+            // Skip hidden files and common ignored directories
+            if file_name.starts_with('.') 
+                || file_name == "node_modules" 
+                || file_name == "target" 
+                || file_name == "dist"
+                || file_name == "build"
+                || self.is_ignored(&path, gitignore) {
+                continue;
+            }
+            
+            let indent = "  ".repeat(depth);
+            
+            if path.is_dir() {
+                file_tree.push_str(&format!("{}📁 {}/\n", indent, file_name));
+                
+                if let Ok(sub_entries) = fs::read_dir(&path) {
+                    self.process_directory(
+                        &sub_entries.collect::<Result<Vec<_>, _>>().unwrap_or_default(),
+                        base_path,
+                        gitignore,
+                        depth + 1,
+                        files,
+                        file_tree,
+                        file_analysis,
+                    );
+                }
+            } else if path.is_file() && !self.is_binary_file(&path) {
+                file_tree.push_str(&format!("{}📄 {}\n", indent, file_name));
+                
+                // Read file content
+                if let Ok(content) = fs::read_to_string(&path) {
+                    // Skip empty files
+                    if content.trim().is_empty() {
+                        continue;
+                    }
+                    
+                    // Skip very large files (> 5MB)
+                    if content.len() > 5_242_880 {
+                        continue;
+                    }
+                    
+                    let rel_path = path
+                        .strip_prefix(base_path)
+                        .unwrap_or(&path)
+                        .to_string_lossy()
+                        .to_string();
+                    
+                    files.push((rel_path.clone(), content));
+                    
+                    // Track file extension
+                    if let Some(ext) = path.extension() {
+                        let ext_str = ext.to_string_lossy().to_string();
+                        *file_analysis.entry(ext_str).or_insert(0) += 1;
+                    }
+                }
+            }
+        }
+    }
+    
+    fn is_binary_file(&self, path: &PathBuf) -> bool {
+        if let Some(ext) = path.extension() {
+            let ext_str = ext.to_string_lossy().to_lowercase();
+            matches!(
+                ext_str.as_str(),
+                "png" | "jpg" | "jpeg" | "gif" | "exe" | "dll" | "ico" 
+                | "svg" | "webp" | "bmp" | "tiff" | "zip" | "tar" | "gz" 
+                | "bin" | "so" | "dylib" | "a" | "o"
+            )
+        } else {
+            false
+        }
+    }
+    
+    fn is_ignored(&self, _path: &PathBuf, _gitignore: &str) -> bool {
+        // Simple gitignore check - in production would use a proper gitignore parser
+        // For now, just return false to include most files
+        false
+    }
+    
+    fn get_language_for_extension(&self, ext: &str) -> &str {
+        match ext {
+            "rs" => "rust",
+            "js" => "javascript",
+            "ts" => "typescript",
+            "py" => "python",
+            "java" => "java",
+            "c" | "h" => "c",
+            "cpp" | "cc" | "cxx" | "hpp" => "cpp",
+            "go" => "go",
+            "rb" => "ruby",
+            "php" => "php",
+            "swift" => "swift",
+            "kt" => "kotlin",
+            "scala" => "scala",
+            "cs" => "csharp",
+            "html" => "html",
+            "css" => "css",
+            "scss" | "sass" => "scss",
+            "json" => "json",
+            "xml" => "xml",
+            "yaml" | "yml" => "yaml",
+            "toml" => "toml",
+            "md" => "markdown",
+            "sh" | "bash" => "bash",
+            "sql" => "sql",
+            "r" => "r",
+            "dart" => "dart",
+            _ => "text",
+        }
+    }
+}
+
+zed::register_extension!(CombineWithContextExtension);
